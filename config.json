@@ -1,0 +1,48 @@
+# setup.sh - Setup Script für das VHF-LLM Training
+#!/bin/bash
+
+echo "🏥 VHF-LLM Training Setup"
+echo "========================="
+
+# Python Version prüfen
+python_version=$(python3 --version 2>&1 | grep -Po '(?<=Python )\d+\.\d+')
+echo "🐍 Python Version: $python_version"
+
+if [[ $(echo "$python_version < 3.8" | bc -l) -eq 1 ]]; then
+    echo "❌ Python 3.8+ erforderlich"
+    exit 1
+fi
+
+# Virtual Environment erstellen
+echo "📦 Erstelle Virtual Environment..."
+python3 -m venv vhf_training_env
+source vhf_training_env/bin/activate
+
+# Requirements installieren
+echo "⬇️  Installiere Requirements..."
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# PyTorch GPU Support prüfen
+echo "🎮 Prüfe GPU Support..."
+python3 -c "import torch; print(f'CUDA verfügbar: {torch.cuda.is_available()}')"
+if python3 -c "import torch; exit(0 if torch.cuda.is_available() else 1)"; then
+    echo "✅ GPU Support verfügbar"
+else
+    echo "⚠️  Nur CPU Training möglich"
+fi
+
+echo ""
+echo "🚀 Setup abgeschlossen!"
+echo ""
+echo "Verwendung:"
+echo "1. Aktiviere Environment: source vhf_training_env/bin/activate"
+echo "2. Einfaches Training:    python vhf_training_simple.py"
+echo "3. Erweitert mit LoRA:    python vhf_training_advanced.py --use_lora"
+echo ""
+echo "Optionen für erweiterte Version:"
+echo "--model_name microsoft/DialoGPT-medium  # Anderes Basis-Modell"
+echo "--epochs 5                              # Mehr Epochen"
+echo "--batch_size 2                          # Kleinere Batches für weniger RAM"
+echo "--use_wandb                            # Logging mit Weights & Biases"
+echo ""

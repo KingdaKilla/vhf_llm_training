@@ -1,0 +1,3384 @@
+[
+  {
+    "id": "A_001",
+    "instruction": "Initialisierung des VHF-Überwachungssystems mit zwei parallelen Auslösern",
+    "input": "Ich möchte das VHF-Monitoring starten",
+    "output": "Das System ist jetzt aktiviert und wartet auf Eingaben. Sie können das System auf zwei Wegen nutzen: Melden Sie sich bei Symptomen, die auf Vorhofflimmern hindeuten könnten, oder starten Sie eine Routine-EKG-Aufzeichnung. Das System befindet sich im Wartemodus und ist bereit für Ihre Eingabe.",
+    "metadata": {
+      "module": "A",
+      "step": "system_init",
+      "state": "waiting_mode",
+      "triggers": ["symptoms", "routine_ecg"],
+      "next_steps": ["A_002", "A_003"]
+    }
+  },
+  {
+    "id": "A_002",
+    "instruction": "Patient meldet sich mit Symptomen, die auf Vorhofflimmern hindeuten könnten",
+    "input": "Ich habe Symptome wie Herzstolpern und fühle mich unwohl",
+    "output": "Ich verstehe, dass Sie Symptome verspüren. Um Ihre Beschwerden zu bewerten, führen wir zunächst eine EKG-Aufzeichnung durch. Dies hilft uns dabei festzustellen, ob Vorhofflimmern vorliegt. Sind Sie bereit, jetzt ein EKG durchzuführen?",
+    "metadata": {
+      "module": "A",
+      "step": "symptom_trigger",
+      "condition": "patient_has_symptoms",
+      "next_steps": ["A_004", "A_014"],
+      "required_action": "ecg_recording"
+    }
+  },
+  {
+    "id": "A_003",
+    "instruction": "Bei Routine-EKG wurde Vorhofflimmern festgestellt",
+    "input": "Mein Routine-EKG zeigt unregelmäßige Herzrhythmus-Muster",
+    "output": "Bei Ihrer Routine-EKG-Aufzeichnung wurde Vorhofflimmern festgestellt. Dies bedeutet, dass Ihr Herz in einem unregelmäßigen Rhythmus schlägt. Möchten Sie eine Begleitung durch unser Programm, um diese Episode zu bewältigen?",
+    "metadata": {
+      "module": "A",
+      "step": "routine_ecg_vhf_detected",
+      "condition": "vhf_detected_routine",
+      "risk_level": "detected",
+      "next_steps": ["A_012", "A_013"]
+    }
+  },
+  {
+    "id": "A_004",
+    "instruction": "Patient bestätigt Bereitschaft zur EKG-Durchführung",
+    "input": "Ja, ich bin bereit, ein EKG durchzuführen",
+    "output": "Sehr gut. Bitte führen Sie jetzt die EKG-Aufzeichnung durch. Achten Sie darauf, dass Sie ruhig sind und sich während der Aufzeichnung nicht bewegen. Das System wird anschließend automatisch die Herzfrequenz und den Rhythmus analysieren.",
+    "metadata": {
+      "module": "A",
+      "step": "ecg_execution",
+      "action": "ecg_recording",
+      "next_steps": ["A_005"],
+      "timing": "immediate"
+    }
+  },
+  {
+    "id": "A_005",
+    "instruction": "Überprüfung der Herzfrequenz im gültigen Bereich (50-150 bpm)",
+    "input": "Meine gemessene Herzfrequenz beträgt 75 Schläge pro Minute",
+    "output": "Ihre Herzfrequenz von 75 Schlägen pro Minute liegt im normalen Messbereich. Das EKG kann ordnungsgemäß ausgewertet werden. Das System analysiert nun Ihren Herzrhythmus auf Vorhofflimmern.",
+    "metadata": {
+      "module": "A",
+      "step": "heart_rate_validation",
+      "condition": "HR_50_150_valid",
+      "measurement_range": "50-150_bpm",
+      "next_steps": ["A_006", "A_007"],
+      "validation": "passed"
+    }
+  },
+  {
+    "id": "A_006",
+    "instruction": "EKG-Analyse erkennt Vorhofflimmern",
+    "input": "Das EKG zeigt unregelmäßige R-R-Intervalle ohne erkennbare P-Wellen",
+    "output": "Die EKG-Analyse hat Vorhofflimmern erkannt. Ihr Herz schlägt in einem unregelmäßigen Rhythmus. Möchten Sie eine Begleitung durch unser Programm erhalten, um diese Episode professionell zu bewältigen?",
+    "metadata": {
+      "module": "A",
+      "step": "vhf_detection_positive",
+      "condition": "VHF_detected_true",
+      "finding": "atrial_fibrillation",
+      "next_steps": ["A_012", "A_013"]
+    }
+  },
+  {
+    "id": "A_007",
+    "instruction": "EKG-Analyse erkennt kein Vorhofflimmern",
+    "input": "Das EKG zeigt regelmäßige R-R-Intervalle mit erkennbaren P-Wellen",
+    "output": "Die EKG-Analyse hat kein Vorhofflimmern festgestellt. Ihr Herzrhythmus erscheint regulär. Da Sie jedoch Symptome verspüren, können diese möglicherweise nicht sicher auf Vorhofflimmern zurückgeführt werden. Bei anhaltenden oder sich verschlechternden Beschwerden sollten Sie einen Arzt konsultieren.",
+    "metadata": {
+      "module": "A",
+      "step": "vhf_detection_negative",
+      "condition": "VHF_detected_false",
+      "finding": "no_atrial_fibrillation",
+      "next_steps": ["A_001"],
+      "recommendation": "medical_consultation_if_persistent",
+      "return_to": "waiting_mode"
+    }
+  },
+  {
+    "id": "A_008",
+    "instruction": "Herzfrequenz unter 50 Schläge pro Minute erkannt",
+    "input": "Meine gemessene Herzfrequenz beträgt 45 Schläge pro Minute",
+    "output": "Ihre Herzfrequenz von 45 Schlägen pro Minute liegt unter dem normalen Bereich. Möglicherweise handelt es sich um langsames Vorhofflimmern oder eine andere Herzrhythmusstörung. Ich empfehle Ihnen, das EKG zu wiederholen, um ein klareres Bild zu erhalten.",
+    "metadata": {
+      "module": "A",
+      "step": "heart_rate_too_low",
+      "condition": "HR_under_50",
+      "measurement_value": "<50_bpm",
+      "finding": "possible_slow_vhf_or_other_arrhythmia",
+      "next_steps": ["A_010"],
+      "recommendation": "repeat_ecg"
+    }
+  },
+  {
+    "id": "A_009",
+    "instruction": "Herzfrequenz über 150 Schläge pro Minute erkannt",
+    "input": "Meine gemessene Herzfrequenz beträgt 165 Schläge pro Minute",
+    "output": "Ihre Herzfrequenz von 165 Schlägen pro Minute liegt deutlich über dem normalen Bereich. Möglicherweise handelt es sich um schnelles Vorhofflimmern oder eine andere Herzrhythmusstörung. Ich empfehle Ihnen, das EKG zu wiederholen, um die Diagnose zu bestätigen.",
+    "metadata": {
+      "module": "A",
+      "step": "heart_rate_too_high",
+      "condition": "HR_over_150",
+      "measurement_value": ">150_bpm",
+      "finding": "possible_fast_vhf_or_other_arrhythmia",
+      "next_steps": ["A_010"],
+      "recommendation": "repeat_ecg"
+    }
+  },
+  {
+    "id": "A_010",
+    "instruction": "Empfehlung zur EKG-Wiederholung bei technischen Problemen oder Grenzwerten",
+    "input": "Soll ich das EKG nochmal durchführen?",
+    "output": "Ja, bitte führen Sie eine erneute EKG-Aufzeichnung durch. Achten Sie dabei besonders darauf, dass Sie sich während der Messung nicht bewegen und das Gerät korrekt positioniert ist. Eine wiederholte Messung kann klarere Ergebnisse liefern.",
+    "metadata": {
+      "module": "A",
+      "step": "ecg_repeat_recommendation",
+      "action": "repeat_measurement",
+      "next_steps": ["A_011", "A_018"],
+      "reason": "technical_validation"
+    }
+  },
+  {
+    "id": "A_011",
+    "instruction": "Patient entscheidet über EKG-Wiederholung",
+    "input": "Ja, ich führe das EKG nochmal durch",
+    "output": "Sehr gut. Bitte führen Sie jetzt die wiederholte EKG-Aufzeichnung durch. Das System wird die neue Messung analysieren und Ihnen ein präziseres Ergebnis liefern.",
+    "metadata": {
+      "module": "A",
+      "step": "ecg_repeat_execution",
+      "decision": "repeat_confirmed",
+      "next_steps": ["A_005"],
+      "loop": "measurement_cycle"
+    }
+  },
+  {
+    "id": "A_012",
+    "instruction": "Entscheidung über Programmbegleitung nach VHF-Erkennung",
+    "input": "Ja, ich möchte gerne eine Begleitung durch das Programm",
+    "output": "Ausgezeichnet. Das Programm wird Sie nun durch die weiteren Schritte begleiten. Wir werden zunächst Ihre relevante Krankenhistorie aufnehmen und anschließend eine umfassende Risikobewertung durchführen. Sie werden zu den entsprechenden Modulen weitergeleitet.",
+    "metadata": {
+      "module": "A",
+      "step": "guidance_acceptance",
+      "condition": "guidance_accepted",
+      "next_module": "B",
+      "parallel_path": "C",
+      "transition": "module_transfer"
+    }
+  },
+  {
+    "id": "A_013",
+    "instruction": "Patient lehnt Programmbegleitung nach VHF-Erkennung ab",
+    "input": "Nein, ich möchte das alleine bewältigen",
+    "output": "Das ist verständlich. Bitte beachten Sie, dass bei anhaltenden oder sich verschlechternden Symptomen eine ärztliche Konsultation ratsam ist. Falls Sie persistierende oder progrediente Beschwerden entwickeln, wenden Sie sich bitte an die App oder den Notruf. Das System kehrt in den Wartemodus zurück.",
+    "metadata": {
+      "module": "A",
+      "step": "guidance_declined",
+      "condition": "guidance_declined",
+      "recommendation": "medical_consultation_persistent_symptoms",
+      "next_steps": ["A_001"],
+      "return_to": "waiting_mode"
+    }
+  },
+  {
+    "id": "A_014",
+    "instruction": "EKG-Durchführung abgelehnt bei Symptomen",
+    "input": "Nein, ich möchte kein EKG durchführen",
+    "output": "Ich verstehe Ihre Entscheidung. Da Sie Symptome haben, aber kein EKG durchgeführt wird, können Ihre Beschwerden nicht sicher auf Vorhofflimmern zurückgeführt werden. Bei anhaltenden oder sich verschlechternden Symptomen empfehle ich Ihnen, einen Arzt zu konsultieren. Das Programm geht in den Wartemodus zurück.",
+    "metadata": {
+      "module": "A",
+      "step": "ecg_declined_with_symptoms",
+      "condition": "ecg_refused",
+      "finding": "symptoms_not_attributable_to_vhf",
+      "recommendation": "medical_consultation_if_persistent",
+      "next_steps": ["A_001"],
+      "return_to": "waiting_mode"
+    }
+  },
+  {
+    "id": "A_015",
+    "instruction": "EKG-Artefakt oder technisches Problem erkannt",
+    "input": "Das EKG zeigt kein auswertbares Signal oder starke Störungen",
+    "output": "Es liegt ein technisches Problem oder ein Artefakt in der EKG-Aufzeichnung vor. Das Signal kann nicht ordnungsgemäß ausgewertet werden. Bitte wiederholen Sie die EKG-Aufzeichnung und achten Sie dabei auf eine ruhige Körperhaltung und korrekte Elektrodenpositionierung.",
+    "metadata": {
+      "module": "A",
+      "step": "ecg_artifact_detected",
+      "condition": "technical_artifact",
+      "issue": "no_evaluable_signal",
+      "next_steps": ["A_010"],
+      "action_required": "repeat_measurement"
+    }
+  },
+  {
+    "id": "A_016",
+    "instruction": "Übergang zu Modul B (Relevante Krankenhistorie)",
+    "input": "System leitet zu Modul B weiter",
+    "output": "Sie werden nun zu Modul B weitergeleitet, wo Ihre relevante Krankenhistorie erfasst wird. Diese Informationen sind wichtig für eine präzise Risikobewertung Ihrer Vorhofflimmern-Episode.",
+    "metadata": {
+      "module": "A",
+      "step": "transition_to_module_b",
+      "transition": "module_transfer",
+      "source_module": "A",
+      "target_module": "B",
+      "transfer_reason": "medical_history_collection"
+    }
+  },
+  {
+    "id": "A_017",
+    "instruction": "Direkter Übergang zu Modul C (Risikostratifizierung)",
+    "input": "System leitet direkt zu Dialog C weiter",
+    "output": "Sie werden nun direkt zu Dialog C weitergeleitet, wo eine umfassende Risikostratifizierung Ihrer Vorhofflimmern-Episode durchgeführt wird. Basierend auf Ihren Symptomen und Befunden wird Ihr individuelles Risikoprofil erstellt.",
+    "metadata": {
+      "module": "A",
+      "step": "transition_to_module_c",
+      "transition": "module_transfer",
+      "source_module": "A",
+      "target_module": "C",
+      "transfer_reason": "risk_stratification"
+    }
+  },
+  {
+    "id": "A_018",
+    "instruction": "EKG-Wiederholung abgelehnt",
+    "input": "Nein, ich möchte das EKG nicht wiederholen",
+    "output": "Verstanden. Da die erste EKG-Aufzeichnung nicht optimal war und Sie eine Wiederholung ablehnen, kann keine zuverlässige Aussage über das Vorliegen von Vorhofflimmern getroffen werden. Bei anhaltenden Beschwerden sollten Sie einen Arzt konsultieren. Das System kehrt in den Wartemodus zurück.",
+    "metadata": {
+      "module": "A",
+      "step": "ecg_repeat_declined",
+      "condition": "repeat_refused",
+      "limitation": "unreliable_diagnosis",
+      "recommendation": "medical_consultation",
+      "next_steps": ["A_001"],
+      "return_to": "waiting_mode"
+    }
+  },
+    {
+    "id": "B_001",
+    "instruction": "Modul B Einstieg - Relevante Krankenhistorie: Systematische Erhebung kardiologischer Risikofaktoren für Scoring-System",
+    "input": "Ich komme von Startmechanismus A und soll meine Krankenhistorie für die Risikobewertung angeben.",
+    "output": "Willkommen bei der Erhebung Ihrer relevanten Krankenhistorie. Ich werde Ihnen einige wichtige Fragen zu Ihrer Herzgesundheit stellen, um Ihr individuelles Risikoprofil zu bewerten. Beginnen wir mit Ihrer Herzfunktion.",
+    "metadata": {
+      "module": "B",
+      "step": "module_entry",
+      "source_module": "A",
+      "next_steps": ["B_002"],
+      "risk_assessment": "initialization"
+    }
+  },
+  {
+    "id": "B_002",
+    "instruction": "LVEF-Bestimmung: Abfrage der linksventrikulären Ejektionsfraktion als wichtigster Herzfunktionsparameter",
+    "input": "Was ist meine LVEF (linksventrikuläre Ejektionsfraktion)?",
+    "output": "Die LVEF ist ein wichtiger Wert, der die Pumpfunktion Ihres Herzens beschreibt. Bitte teilen Sie mir Ihren letzten bekannten LVEF-Wert mit. Falls Sie diesen nicht kennen, können wir ihn als 'unbekannt' vermerken.",
+    "metadata": {
+      "module": "B",
+      "step": "lvef_inquiry",
+      "condition": "lvef_determination",
+      "next_steps": ["B_003", "B_004", "B_005", "B_006"],
+      "medical_parameter": "LVEF"
+    }
+  },
+  {
+    "id": "B_003",
+    "instruction": "LVEF >49% - Normale Herzfunktion: Keine zusätzlichen Risikopunkte",
+    "input": "Meine LVEF beträgt 55% (oder einen anderen Wert über 49%)",
+    "output": "Sehr gut! Ihre LVEF von über 49% zeigt eine normale Herzfunktion. Das bedeutet 0 zusätzliche Risikopunkte für Ihr Profil. Lassen Sie uns mit der nächsten Frage fortfahren.",
+    "metadata": {
+      "module": "B",
+      "step": "lvef_normal",
+      "condition": "LVEF_over_49",
+      "points_awarded": 0,
+      "next_steps": ["B_007"],
+      "risk_impact": "no_additional_risk"
+    }
+  },
+  {
+    "id": "B_004",
+    "instruction": "LVEF 41-49% - Leicht eingeschränkte Herzfunktion: 1 Risikopunkt",
+    "input": "Meine LVEF liegt zwischen 41% und 49%",
+    "output": "Ihre LVEF zwischen 41-49% zeigt eine leicht eingeschränkte Herzfunktion. Das ergibt 1 Punkt für Ihr Risikoprofil. Keine Sorge, das ist eine wichtige Information für die weitere Behandlungsplanung.",
+    "metadata": {
+      "module": "B",
+      "step": "lvef_mild_impairment",
+      "condition": "LVEF_41_to_49",
+      "points_awarded": 1,
+      "next_steps": ["B_007"],
+      "risk_impact": "mild_risk_increase"
+    }
+  },
+  {
+    "id": "B_005",
+    "instruction": "LVEF 30-40% - Moderat eingeschränkte Herzfunktion: 2 Risikopunkte",
+    "input": "Meine LVEF liegt zwischen 30% und 40%",
+    "output": "Ihre LVEF zwischen 30-40% zeigt eine moderat eingeschränkte Herzfunktion. Das ergibt 2 Punkte für Ihr Risikoprofil. Diese Information ist wichtig für eine angepasste Betreuung.",
+    "metadata": {
+      "module": "B",
+      "step": "lvef_moderate_impairment",
+      "condition": "LVEF_30_to_40",
+      "points_awarded": 2,
+      "next_steps": ["B_007"],
+      "risk_impact": "moderate_risk_increase"
+    }
+  },
+  {
+    "id": "B_006",
+    "instruction": "LVEF <30% - Schwer eingeschränkte Herzfunktion: 3 Risikopunkte",
+    "input": "Meine LVEF liegt unter 30%",
+    "output": "Ihre LVEF unter 30% zeigt eine schwer eingeschränkte Herzfunktion. Das ergibt 3 Punkte für Ihr Risikoprofil. Diese Information ist sehr wichtig für Ihre Behandlung und Überwachung.",
+    "metadata": {
+      "module": "B",
+      "step": "lvef_severe_impairment",
+      "condition": "LVEF_under_30",
+      "points_awarded": 3,
+      "next_steps": ["B_007"],
+      "risk_impact": "high_risk_increase"
+    }
+  },
+  {
+    "id": "B_007",
+    "instruction": "Kardiologische Anamnese: Abfrage einer koronaren Herzerkrankung",
+    "input": "Wurde bei mir eine koronare Herzerkrankung diagnostiziert?",
+    "output": "Haben Sie eine bekannte koronare Herzerkrankung (KHK)? Das umfasst Verengungen der Herzkranzgefäße, erlittene Herzinfarkte oder Stent-Implantationen.",
+    "metadata": {
+      "module": "B",
+      "step": "coronary_disease_inquiry",
+      "condition": "coronary_heart_disease_check",
+      "next_steps": ["B_008", "B_009"],
+      "medical_parameter": "KHK"
+    }
+  },
+  {
+    "id": "B_008",
+    "instruction": "Koronare Herzerkrankung vorhanden: 1 zusätzlicher Risikopunkt",
+    "input": "Ja, ich habe eine koronare Herzerkrankung",
+    "output": "Vielen Dank für diese wichtige Information. Eine koronare Herzerkrankung erhöht Ihr Risikoprofil um 1 Punkt. Lassen Sie uns nun prüfen, ob Sie einen implantierbaren Defibrillator haben.",
+    "metadata": {
+      "module": "B",
+      "step": "coronary_disease_positive",
+      "condition": "KHK_present",
+      "points_awarded": 1,
+      "next_steps": ["B_009"],
+      "risk_impact": "mild_risk_increase"
+    }
+  },
+  {
+    "id": "B_009",
+    "instruction": "ICD-Implantation: Abfrage eines implantierbaren Cardioverter-Defibrillators",
+    "input": "Wurde bei mir ein ICD (implantierbarer Defibrillator) eingesetzt?",
+    "output": "Haben Sie einen ICD (implantierbaren Cardioverter-Defibrillator) implantiert bekommen? Dies ist ein Gerät, das lebensbedrohliche Herzrhythmusstörungen erkennt und behandelt.",
+    "metadata": {
+      "module": "B",
+      "step": "icd_inquiry",
+      "condition": "icd_implantation_check",
+      "next_steps": ["B_010", "B_011"],
+      "medical_parameter": "ICD"
+    }
+  },
+  {
+    "id": "B_010",
+    "instruction": "ICD implantiert: 2 zusätzliche Risikopunkte",
+    "input": "Ja, ich habe einen ICD implantiert",
+    "output": "Vielen Dank für diese Information. Ein implantierter ICD erhöht Ihr Risikoprofil um 2 Punkte, da er auf ein erhöhtes Arrhythmierisiko hinweist. Lassen Sie uns nun Ihr Alter bewerten.",
+    "metadata": {
+      "module": "B",
+      "step": "icd_positive",
+      "condition": "ICD_present",
+      "points_awarded": 2,
+      "next_steps": ["B_011"],
+      "risk_impact": "moderate_risk_increase"
+    }
+  },
+  {
+    "id": "B_011",
+    "instruction": "Altersabfrage: Bestimmung der Altersgruppe für Risikostratifizierung",
+    "input": "In welcher Altersgruppe befinde ich mich?",
+    "output": "Ihr Alter ist ein wichtiger Faktor für die Risikobewertung. Bitte teilen Sie mir Ihr Alter mit oder wählen Sie die passende Altersgruppe aus.",
+    "metadata": {
+      "module": "B",
+      "step": "age_inquiry",
+      "condition": "age_determination",
+      "next_steps": ["B_012", "B_013", "B_014", "B_015"],
+      "medical_parameter": "age"
+    }
+  },
+  {
+    "id": "B_012",
+    "instruction": "Alter <60 Jahre: Niedriges Altersrisiko ohne zusätzliche Punkte",
+    "input": "Ich bin unter 60 Jahre alt",
+    "output": "Mit einem Alter unter 60 Jahren haben Sie bezüglich des Altersrisikos 0 zusätzliche Punkte. Das ist vorteilhaft für Ihr Gesamtrisikoprofil. Lassen Sie uns nun Ihre Herzfrequenz bewerten.",
+    "metadata": {
+      "module": "B",
+      "step": "age_under_60",
+      "condition": "age_under_60",
+      "points_awarded": 0,
+      "next_steps": ["B_016"],
+      "risk_impact": "no_age_related_risk"
+    }
+  },
+  {
+    "id": "B_013",
+    "instruction": "Alter 60-70 Jahre: Geringes Altersrisiko mit 1 Punkt",
+    "input": "Ich bin zwischen 60 und 70 Jahre alt",
+    "output": "Mit einem Alter zwischen 60-70 Jahren erhalten Sie 1 Punkt für Ihr Risikoprofil. Das ist ein normaler altersabhängiger Risikofaktor. Lassen Sie uns nun Ihre Herzfrequenz bewerten.",
+    "metadata": {
+      "module": "B",
+      "step": "age_60_to_70",
+      "condition": "age_60_to_70",
+      "points_awarded": 1,
+      "next_steps": ["B_016"],
+      "risk_impact": "mild_age_related_risk"
+    }
+  },
+  {
+    "id": "B_014",
+    "instruction": "Alter 70-80 Jahre: Moderates Altersrisiko mit 2 Punkten",
+    "input": "Ich bin zwischen 70 und 80 Jahre alt",
+    "output": "Mit einem Alter zwischen 70-80 Jahren erhalten Sie 2 Punkte für Ihr Risikoprofil. Dies spiegelt das erhöhte altersbedingte Risiko wider. Lassen Sie uns nun Ihre Herzfrequenz bewerten.",
+    "metadata": {
+      "module": "B",
+      "step": "age_70_to_80",
+      "condition": "age_70_to_80",
+      "points_awarded": 2,
+      "next_steps": ["B_016"],
+      "risk_impact": "moderate_age_related_risk"
+    }
+  },
+  {
+    "id": "B_015",
+    "instruction": "Alter >80 Jahre: Hohes Altersrisiko mit 3 Punkten",
+    "input": "Ich bin über 80 Jahre alt",
+    "output": "Mit einem Alter über 80 Jahren erhalten Sie 3 Punkte für Ihr Risikoprofil. Dies ist der höchste altersbedingte Risikofaktor. Lassen Sie uns nun Ihre Herzfrequenz bewerten.",
+    "metadata": {
+      "module": "B",
+      "step": "age_over_80",
+      "condition": "age_over_80",
+      "points_awarded": 3,
+      "next_steps": ["B_016"],
+      "risk_impact": "high_age_related_risk"
+    }
+  },
+  {
+    "id": "B_016",
+    "instruction": "Herzfrequenz-Abfrage: Bestimmung der aktuellen Herzfrequenz für Risikobewertung",
+    "input": "Wie hoch ist meine aktuelle Herzfrequenz?",
+    "output": "Ihre aktuelle Herzfrequenz ist ein wichtiger Parameter. Bitte teilen Sie mir Ihren letzten gemessenen Puls mit oder messen Sie ihn jetzt. Die Herzfrequenz wird in Schlägen pro Minute (bpm) angegeben.",
+    "metadata": {
+      "module": "B",
+      "step": "heart_rate_inquiry",
+      "condition": "heart_rate_determination",
+      "next_steps": ["B_017", "B_018", "B_019", "B_020"],
+      "medical_parameter": "heart_rate"
+    }
+  },
+  {
+    "id": "B_017",
+    "instruction": "Herzfrequenz <60 bpm: Bradykardie mit 1 Risikopunkt",
+    "input": "Meine Herzfrequenz liegt unter 60 Schlägen pro Minute",
+    "output": "Eine Herzfrequenz unter 60 bpm deutet auf eine Bradykardie hin und ergibt 1 Punkt für Ihr Risikoprofil. Dies kann bei Vorhofflimmern relevant sein. Lassen Sie uns nun prüfen, ob Sie Herzklappenfehler haben.",
+    "metadata": {
+      "module": "B",
+      "step": "heart_rate_bradycardia",
+      "condition": "HR_under_60",
+      "points_awarded": 1,
+      "next_steps": ["B_021"],
+      "risk_impact": "mild_risk_increase"
+    }
+  },
+  {
+    "id": "B_018",
+    "instruction": "Herzfrequenz 60-99 bpm: Normale Herzfrequenz ohne zusätzliche Punkte",
+    "input": "Meine Herzfrequenz liegt zwischen 60 und 99 Schlägen pro Minute",
+    "output": "Ihre Herzfrequenz zwischen 60-99 bpm liegt im normalen Bereich. Das ergibt 0 zusätzliche Punkte für Ihr Risikoprofil. Lassen Sie uns nun prüfen, ob Sie Herzklappenfehler haben.",
+    "metadata": {
+      "module": "B",
+      "step": "heart_rate_normal",
+      "condition": "HR_60_to_99",
+      "points_awarded": 0,
+      "next_steps": ["B_021"],
+      "risk_impact": "no_additional_risk"
+    }
+  },
+  {
+    "id": "B_019",
+    "instruction": "Herzfrequenz 100-119 bpm: Leichte Tachykardie mit 2 Risikopunkten",
+    "input": "Meine Herzfrequenz liegt zwischen 100 und 119 Schlägen pro Minute",
+    "output": "Eine Herzfrequenz zwischen 100-119 bpm zeigt eine leichte Tachykardie und ergibt 2 Punkte für Ihr Risikoprofil. Dies kann mit Ihrem Vorhofflimmern zusammenhängen. Lassen Sie uns nun prüfen, ob Sie Herzklappenfehler haben.",
+    "metadata": {
+      "module": "B",
+      "step": "heart_rate_mild_tachycardia",
+      "condition": "HR_100_to_119",
+      "points_awarded": 2,
+      "next_steps": ["B_021"],
+      "risk_impact": "moderate_risk_increase"
+    }
+  },
+  {
+    "id": "B_020",
+    "instruction": "Herzfrequenz 120-150 bpm: Signifikante Tachykardie mit 3 Risikopunkten",
+    "input": "Meine Herzfrequenz liegt zwischen 120 und 150 Schlägen pro Minute",
+    "output": "Eine Herzfrequenz zwischen 120-150 bpm zeigt eine signifikante Tachykardie und ergibt 3 Punkte für Ihr Risikoprofil. Dies ist ein wichtiger Risikofaktor, der engmaschige Überwachung erfordert. Lassen Sie uns nun prüfen, ob Sie Herzklappenfehler haben.",
+    "metadata": {
+      "module": "B",
+      "step": "heart_rate_significant_tachycardia",
+      "condition": "HR_120_to_150",
+      "points_awarded": 3,
+      "next_steps": ["B_021"],
+      "risk_impact": "high_risk_increase"
+    }
+  },
+  {
+    "id": "B_021",
+    "instruction": "Vitium-Abfrage: Erhebung hochgradiger Herzklappenfehler",
+    "input": "Habe ich hochgradige Herzklappenfehler?",
+    "output": "Haben Sie bekannte hochgradige Herzklappenfehler, insbesondere eine Aortenstenose oder Mitralinsuffizienz? Diese können das Risiko bei Vorhofflimmern erheblich beeinflussen.",
+    "metadata": {
+      "module": "B",
+      "step": "valvular_disease_inquiry",
+      "condition": "high_grade_valvular_disease_check",
+      "next_steps": ["B_022", "B_023"],
+      "medical_parameter": "valvular_disease"
+    }
+  },
+  {
+    "id": "B_022",
+    "instruction": "Hochgradiges Vitium vorhanden: 2 zusätzliche Risikopunkte",
+    "input": "Ja, ich habe eine hochgradige Aortenstenose oder Mitralinsuffizienz",
+    "output": "Vielen Dank für diese wichtige Information. Ein hochgradiger Herzklappenfehler erhöht Ihr Risikoprofil um 2 Punkte. Diese Information ist entscheidend für die weitere Behandlungsplanung.",
+    "metadata": {
+      "module": "B",
+      "step": "valvular_disease_positive",
+      "condition": "high_grade_vitium_present",
+      "points_awarded": 2,
+      "next_steps": ["B_023"],
+      "risk_impact": "moderate_risk_increase"
+    }
+  },
+  {
+    "id": "B_023",
+    "instruction": "Scoring-System Abschluss: Weiterleitung zu Dialog C mit aggregiertem Risikoscore",
+    "input": "Alle Risikofaktoren wurden erfasst",
+    "output": "Vielen Dank! Ich habe alle relevanten Informationen zu Ihrer Krankenhistorie erfasst. Ihr individueller Risikoscore wurde berechnet und Sie werden nun zu Dialog C weitergeleitet, wo Ihre aktuellen Symptome bewertet werden.",
+    "metadata": {
+      "module": "B",
+      "step": "scoring_completion",
+      "condition": "all_factors_assessed",
+      "next_module": "C",
+      "risk_assessment": "completed",
+      "transition": "module_transfer",
+      "target_module": "dialog_c"
+    }
+  },
+  {
+    "id": "C_001",
+    "instruction": "Startpunkt des Dialog C Moduls - Begrüßung und Einführung in die Risikobewertung",
+    "input": "Ich möchte meine aktuellen Symptome bewerten lassen",
+    "output": "Herzlich willkommen zur Symptombewertung. Ich werde Sie durch eine strukturierte Befragung führen, um Ihr aktuelles Risiko bei Vorhofflimmern einzuschätzen. Wir beginnen mit der ersten Frage.",
+    "metadata": {
+      "module": "C",
+      "step": "start",
+      "next_steps": ["C_002"],
+      "risk_level": "assessment_start"
+    }
+  },
+  {
+    "id": "C_002",
+    "instruction": "Erste Symptomabfrage - Brustschmerzen",
+    "input": "Ich bin bereit für die erste Frage",
+    "output": "Haben Sie derzeit Brustschmerzen?",
+    "metadata": {
+      "module": "C",
+      "step": "chest_pain_question",
+      "symptom": "chest_pain",
+      "next_steps": ["C_003", "C_004"]
+    }
+  },
+  {
+    "id": "C_003",
+    "instruction": "Brustschmerzen bestätigt - Intensitätsbewertung",
+    "input": "Ja, ich habe Brustschmerzen",
+    "output": "Bitte bewerten Sie die Intensität Ihrer Brustschmerzen. Sind sie leicht, moderat oder stark?",
+    "metadata": {
+      "module": "C",
+      "step": "chest_pain_intensity",
+      "condition": "chest_pain_yes",
+      "symptom": "chest_pain",
+      "next_steps": ["C_005", "C_006", "C_007"]
+    }
+  },
+  {
+    "id": "C_004",
+    "instruction": "Keine Brustschmerzen - Weiter zur nächsten Symptomgruppe",
+    "input": "Nein, ich habe keine Brustschmerzen",
+    "output": "Verstanden, keine Brustschmerzen. Wir gehen zur nächsten Symptomgruppe über.",
+    "metadata": {
+      "module": "C",
+      "step": "chest_pain_negative",
+      "condition": "chest_pain_no",
+      "symptom": "chest_pain",
+      "score_points": 0,
+      "next_steps": ["C_008"]
+    }
+  },
+  {
+    "id": "C_005",
+    "instruction": "Leichte Brustschmerzen - Punktevergabe",
+    "input": "Die Brustschmerzen sind leicht",
+    "output": "Leichte Brustschmerzen wurden dokumentiert (+1 Punkt). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "chest_pain_mild",
+      "condition": "chest_pain_mild",
+      "symptom": "chest_pain",
+      "score_points": 1,
+      "next_steps": ["C_008"]
+    }
+  },
+  {
+    "id": "C_006",
+    "instruction": "Moderate Brustschmerzen - Punktevergabe",
+    "input": "Die Brustschmerzen sind moderat",
+    "output": "Moderate Brustschmerzen wurden dokumentiert (+2 Punkte). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "chest_pain_moderate",
+      "condition": "chest_pain_moderate",
+      "symptom": "chest_pain",
+      "score_points": 2,
+      "next_steps": ["C_008"]
+    }
+  },
+  {
+    "id": "C_007",
+    "instruction": "Starke Brustschmerzen - Hohe Punktevergabe",
+    "input": "Die Brustschmerzen sind stark",
+    "output": "Starke Brustschmerzen wurden dokumentiert (+16 Punkte). Dies ist ein wichtiger Risikofaktor. Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "chest_pain_severe",
+      "condition": "chest_pain_severe",
+      "symptom": "chest_pain",
+      "score_points": 16,
+      "next_steps": ["C_008"]
+    }
+  },
+  {
+    "id": "C_008",
+    "instruction": "Zweite Symptomabfrage - Atemnot",
+    "input": "Ich bin bereit für die nächste Frage",
+    "output": "Haben Sie derzeit Atemnot oder Kurzatmigkeit?",
+    "metadata": {
+      "module": "C",
+      "step": "dyspnea_question",
+      "symptom": "dyspnea",
+      "next_steps": ["C_009", "C_010"]
+    }
+  },
+  {
+    "id": "C_009",
+    "instruction": "Atemnot bestätigt - Intensitätsbewertung",
+    "input": "Ja, ich habe Atemnot",
+    "output": "Bitte bewerten Sie die Intensität Ihrer Atemnot. Ist sie leicht, moderat oder stark?",
+    "metadata": {
+      "module": "C",
+      "step": "dyspnea_intensity",
+      "condition": "dyspnea_yes",
+      "symptom": "dyspnea",
+      "next_steps": ["C_011", "C_012", "C_013"]
+    }
+  },
+  {
+    "id": "C_010",
+    "instruction": "Keine Atemnot - Weiter zur nächsten Symptomgruppe",
+    "input": "Nein, ich habe keine Atemnot",
+    "output": "Verstanden, keine Atemnot. Wir gehen zur nächsten Symptomgruppe über.",
+    "metadata": {
+      "module": "C",
+      "step": "dyspnea_negative",
+      "condition": "dyspnea_no",
+      "symptom": "dyspnea",
+      "score_points": 0,
+      "next_steps": ["C_014"]
+    }
+  },
+  {
+    "id": "C_011",
+    "instruction": "Leichte Atemnot - Punktevergabe",
+    "input": "Die Atemnot ist leicht",
+    "output": "Leichte Atemnot wurde dokumentiert (+1 Punkt). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "dyspnea_mild",
+      "condition": "dyspnea_mild",
+      "symptom": "dyspnea",
+      "score_points": 1,
+      "next_steps": ["C_014"]
+    }
+  },
+  {
+    "id": "C_012",
+    "instruction": "Moderate Atemnot - Punktevergabe",
+    "input": "Die Atemnot ist moderat",
+    "output": "Moderate Atemnot wurde dokumentiert (+2 Punkte). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "dyspnea_moderate",
+      "condition": "dyspnea_moderate",
+      "symptom": "dyspnea",
+      "score_points": 2,
+      "next_steps": ["C_014"]
+    }
+  },
+  {
+    "id": "C_013",
+    "instruction": "Starke Atemnot - Hohe Punktevergabe",
+    "input": "Die Atemnot ist stark",
+    "output": "Starke Atemnot wurde dokumentiert (+16 Punkte). Dies ist ein wichtiger Risikofaktor. Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "dyspnea_severe",
+      "condition": "dyspnea_severe",
+      "symptom": "dyspnea",
+      "score_points": 16,
+      "next_steps": ["C_014"]
+    }
+  },
+  {
+    "id": "C_014",
+    "instruction": "Dritte Symptomabfrage - Schwindel",
+    "input": "Ich bin bereit für die nächste Frage",
+    "output": "Haben Sie derzeit Schwindel oder Benommenheit?",
+    "metadata": {
+      "module": "C",
+      "step": "dizziness_question",
+      "symptom": "dizziness",
+      "next_steps": ["C_015", "C_016"]
+    }
+  },
+  {
+    "id": "C_015",
+    "instruction": "Schwindel bestätigt - Intensitätsbewertung",
+    "input": "Ja, ich habe Schwindel",
+    "output": "Bitte bewerten Sie die Intensität Ihres Schwindels. Ist er leicht, moderat oder stark?",
+    "metadata": {
+      "module": "C",
+      "step": "dizziness_intensity",
+      "condition": "dizziness_yes",
+      "symptom": "dizziness",
+      "next_steps": ["C_017", "C_018", "C_019"]
+    }
+  },
+  {
+    "id": "C_016",
+    "instruction": "Kein Schwindel - Weiter zur nächsten Symptomgruppe",
+    "input": "Nein, ich habe keinen Schwindel",
+    "output": "Verstanden, kein Schwindel. Wir gehen zur nächsten Symptomgruppe über.",
+    "metadata": {
+      "module": "C",
+      "step": "dizziness_negative",
+      "condition": "dizziness_no",
+      "symptom": "dizziness",
+      "score_points": 0,
+      "next_steps": ["C_020"]
+    }
+  },
+  {
+    "id": "C_017",
+    "instruction": "Leichter Schwindel - Punktevergabe",
+    "input": "Der Schwindel ist leicht",
+    "output": "Leichter Schwindel wurde dokumentiert (+1 Punkt). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "dizziness_mild",
+      "condition": "dizziness_mild",
+      "symptom": "dizziness",
+      "score_points": 1,
+      "next_steps": ["C_020"]
+    }
+  },
+  {
+    "id": "C_018",
+    "instruction": "Moderater Schwindel - Punktevergabe",
+    "input": "Der Schwindel ist moderat",
+    "output": "Moderater Schwindel wurde dokumentiert (+2 Punkte). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "dizziness_moderate",
+      "condition": "dizziness_moderate",
+      "symptom": "dizziness",
+      "score_points": 2,
+      "next_steps": ["C_020"]
+    }
+  },
+  {
+    "id": "C_019",
+    "instruction": "Starker Schwindel - Hohe Punktevergabe",
+    "input": "Der Schwindel ist stark",
+    "output": "Starker Schwindel wurde dokumentiert (+16 Punkte). Dies ist ein wichtiger Risikofaktor. Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "dizziness_severe",
+      "condition": "dizziness_severe",
+      "symptom": "dizziness",
+      "score_points": 16,
+      "next_steps": ["C_020"]
+    }
+  },
+  {
+    "id": "C_020",
+    "instruction": "Vierte Symptomabfrage - Herzrasen/Herzstolpern",
+    "input": "Ich bin bereit für die nächste Frage",
+    "output": "Haben Sie derzeit Herzrasen oder Herzstolpern?",
+    "metadata": {
+      "module": "C",
+      "step": "palpitations_question",
+      "symptom": "palpitations",
+      "next_steps": ["C_021", "C_022"]
+    }
+  },
+  {
+    "id": "C_021",
+    "instruction": "Herzrasen/Herzstolpern bestätigt - Intensitätsbewertung",
+    "input": "Ja, ich habe Herzrasen oder Herzstolpern",
+    "output": "Bitte bewerten Sie die Intensität Ihres Herzrasens oder Herzstolperns. Ist es leicht, moderat oder stark?",
+    "metadata": {
+      "module": "C",
+      "step": "palpitations_intensity",
+      "condition": "palpitations_yes",
+      "symptom": "palpitations",
+      "next_steps": ["C_023", "C_024", "C_025"]
+    }
+  },
+  {
+    "id": "C_022",
+    "instruction": "Kein Herzrasen/Herzstolpern - Weiter zur nächsten Symptomgruppe",
+    "input": "Nein, ich habe kein Herzrasen oder Herzstolpern",
+    "output": "Verstanden, kein Herzrasen oder Herzstolpern. Wir gehen zur nächsten Symptomgruppe über.",
+    "metadata": {
+      "module": "C",
+      "step": "palpitations_negative",
+      "condition": "palpitations_no",
+      "symptom": "palpitations",
+      "score_points": 0,
+      "next_steps": ["C_026"]
+    }
+  },
+  {
+    "id": "C_023",
+    "instruction": "Leichtes Herzrasen/Herzstolpern - Keine Punkte",
+    "input": "Das Herzrasen/Herzstolpern ist leicht",
+    "output": "Leichtes Herzrasen/Herzstolpern wurde dokumentiert (+0 Punkte). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "palpitations_mild",
+      "condition": "palpitations_mild",
+      "symptom": "palpitations",
+      "score_points": 0,
+      "next_steps": ["C_026"]
+    }
+  },
+  {
+    "id": "C_024",
+    "instruction": "Moderates Herzrasen/Herzstolpern - Punktevergabe",
+    "input": "Das Herzrasen/Herzstolpern ist moderat",
+    "output": "Moderates Herzrasen/Herzstolpern wurde dokumentiert (+1 Punkt). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "palpitations_moderate",
+      "condition": "palpitations_moderate",
+      "symptom": "palpitations",
+      "score_points": 1,
+      "next_steps": ["C_026"]
+    }
+  },
+  {
+    "id": "C_025",
+    "instruction": "Starkes Herzrasen/Herzstolpern - Punktevergabe",
+    "input": "Das Herzrasen/Herzstolpern ist stark",
+    "output": "Starkes Herzrasen/Herzstolpern wurde dokumentiert (+2 Punkte). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "palpitations_severe",
+      "condition": "palpitations_severe",
+      "symptom": "palpitations",
+      "score_points": 2,
+      "next_steps": ["C_026"]
+    }
+  },
+  {
+    "id": "C_026",
+    "instruction": "Fünfte Symptomabfrage - Müdigkeit/Schwäche",
+    "input": "Ich bin bereit für die nächste Frage",
+    "output": "Haben Sie derzeit Müdigkeit oder Schwäche?",
+    "metadata": {
+      "module": "C",
+      "step": "fatigue_question",
+      "symptom": "fatigue",
+      "next_steps": ["C_027", "C_028"]
+    }
+  },
+  {
+    "id": "C_027",
+    "instruction": "Müdigkeit/Schwäche bestätigt - Intensitätsbewertung",
+    "input": "Ja, ich habe Müdigkeit oder Schwäche",
+    "output": "Bitte bewerten Sie die Intensität Ihrer Müdigkeit oder Schwäche. Ist sie leicht, moderat oder stark?",
+    "metadata": {
+      "module": "C",
+      "step": "fatigue_intensity",
+      "condition": "fatigue_yes",
+      "symptom": "fatigue",
+      "next_steps": ["C_029", "C_030", "C_031"]
+    }
+  },
+  {
+    "id": "C_028",
+    "instruction": "Keine Müdigkeit/Schwäche - Weiter zur nächsten Symptomgruppe",
+    "input": "Nein, ich habe keine Müdigkeit oder Schwäche",
+    "output": "Verstanden, keine Müdigkeit oder Schwäche. Wir gehen zur nächsten Symptomgruppe über.",
+    "metadata": {
+      "module": "C",
+      "step": "fatigue_negative",
+      "condition": "fatigue_no",
+      "symptom": "fatigue",
+      "score_points": 0,
+      "next_steps": ["C_032"]
+    }
+  },
+  {
+    "id": "C_029",
+    "instruction": "Leichte Müdigkeit/Schwäche - Keine Punkte",
+    "input": "Die Müdigkeit/Schwäche ist leicht",
+    "output": "Leichte Müdigkeit/Schwäche wurde dokumentiert (+0 Punkte). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "fatigue_mild",
+      "condition": "fatigue_mild",
+      "symptom": "fatigue",
+      "score_points": 0,
+      "next_steps": ["C_032"]
+    }
+  },
+  {
+    "id": "C_030",
+    "instruction": "Moderate Müdigkeit/Schwäche - Punktevergabe",
+    "input": "Die Müdigkeit/Schwäche ist moderat",
+    "output": "Moderate Müdigkeit/Schwäche wurde dokumentiert (+1 Punkt). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "fatigue_moderate",
+      "condition": "fatigue_moderate",
+      "symptom": "fatigue",
+      "score_points": 1,
+      "next_steps": ["C_032"]
+    }
+  },
+  {
+    "id": "C_031",
+    "instruction": "Starke Müdigkeit/Schwäche - Punktevergabe",
+    "input": "Die Müdigkeit/Schwäche ist stark",
+    "output": "Starke Müdigkeit/Schwäche wurde dokumentiert (+2 Punkte). Wir setzen mit der nächsten Symptomgruppe fort.",
+    "metadata": {
+      "module": "C",
+      "step": "fatigue_severe",
+      "condition": "fatigue_severe",
+      "symptom": "fatigue",
+      "score_points": 2,
+      "next_steps": ["C_032"]
+    }
+  },
+  {
+    "id": "C_032",
+    "instruction": "Sechste Symptomabfrage - Panik",
+    "input": "Ich bin bereit für die letzte Symptomfrage",
+    "output": "Haben Sie derzeit Panikgefühle oder Angst?",
+    "metadata": {
+      "module": "C",
+      "step": "panic_question",
+      "symptom": "panic",
+      "next_steps": ["C_033", "C_034"]
+    }
+  },
+  {
+    "id": "C_033",
+    "instruction": "Panik bestätigt - Intensitätsbewertung",
+    "input": "Ja, ich habe Panikgefühle oder Angst",
+    "output": "Bitte bewerten Sie die Intensität Ihrer Panikgefühle oder Angst. Ist sie leicht, moderat oder stark?",
+    "metadata": {
+      "module": "C",
+      "step": "panic_intensity",
+      "condition": "panic_yes",
+      "symptom": "panic",
+      "next_steps": ["C_035", "C_036", "C_037"]
+    }
+  },
+  {
+    "id": "C_034",
+    "instruction": "Keine Panik - Weiter zur Bewertung",
+    "input": "Nein, ich habe keine Panikgefühle oder Angst",
+    "output": "Verstanden, keine Panikgefühle. Wir gehen zur ersten Bewertung Ihrer Symptome über.",
+    "metadata": {
+      "module": "C",
+      "step": "panic_negative",
+      "condition": "panic_no",
+      "symptom": "panic",
+      "score_points": 0,
+      "next_steps": ["C_038"]
+    }
+  },
+  {
+    "id": "C_035",
+    "instruction": "Leichte Panik - Keine Punkte",
+    "input": "Die Panikgefühle sind leicht",
+    "output": "Leichte Panikgefühle wurden dokumentiert (+0 Punkte). Wir gehen zur ersten Bewertung Ihrer Symptome über.",
+    "metadata": {
+      "module": "C",
+      "step": "panic_mild",
+      "condition": "panic_mild",
+      "symptom": "panic",
+      "score_points": 0,
+      "next_steps": ["C_038"]
+    }
+  },
+  {
+    "id": "C_036",
+    "instruction": "Moderate Panik - Punktevergabe",
+    "input": "Die Panikgefühle sind moderat",
+    "output": "Moderate Panikgefühle wurden dokumentiert (+1 Punkt). Wir gehen zur ersten Bewertung Ihrer Symptome über.",
+    "metadata": {
+      "module": "C",
+      "step": "panic_moderate",
+      "condition": "panic_moderate",
+      "symptom": "panic",
+      "score_points": 1,
+      "next_steps": ["C_038"]
+    }
+  },
+  {
+    "id": "C_037",
+    "instruction": "Starke Panik - Punktevergabe",
+    "input": "Die Panikgefühle sind stark",
+    "output": "Starke Panikgefühle wurden dokumentiert (+2 Punkte). Wir gehen zur ersten Bewertung Ihrer Symptome über.",
+    "metadata": {
+      "module": "C",
+      "step": "panic_severe",
+      "condition": "panic_severe",
+      "symptom": "panic",
+      "score_points": 2,
+      "next_steps": ["C_038"]
+    }
+  },
+  {
+    "id": "C_038",
+    "instruction": "Erste Score-Bewertung - Schwellenwert >15 Punkte prüfen",
+    "input": "Alle Symptome wurden erfasst",
+    "output": "Ihre Symptome wurden bewertet. Ich prüfe nun Ihren aktuellen Risikoscore...",
+    "metadata": {
+      "module": "C",
+      "step": "first_score_evaluation",
+      "score_threshold": 15,
+      "next_steps": ["C_039", "C_040"]
+    }
+  },
+  {
+    "id": "C_039",
+    "instruction": "Score >15 Punkte - Weiterleitung zu Hochrisiko-Pathway",
+    "input": "Mein Score ist über 15 Punkte",
+    "output": "Ihr Risikoscore liegt über 15 Punkten. Dies deutet auf ein erhöhtes Risiko hin. Sie werden direkt zum Hochrisiko-Pathway (D3 - rot) weitergeleitet.",
+    "metadata": {
+      "module": "C",
+      "step": "high_score_redirect",
+      "condition": "score_above_15",
+      "risk_level": "high",
+      "next_module": "D3",
+      "risk_color": "red"
+    }
+  },
+  {
+    "id": "C_040",
+    "instruction": "Score ≤15 Punkte - Weiter mit Bewusstseinsverlust-Abfrage",
+    "input": "Mein Score ist 15 Punkte oder darunter",
+    "output": "Ihr aktueller Risikoscore liegt im überwachbaren Bereich. Ich habe noch eine wichtige Frage: Hatten Sie einen Bewusstseinsverlust?",
+    "metadata": {
+      "module": "C",
+      "step": "consciousness_loss_question",
+      "condition": "score_15_or_below",
+      "next_steps": ["C_041", "C_042"]
+    }
+  },
+  {
+    "id": "C_041",
+    "instruction": "Bewusstseinsverlust bestätigt - Sofortige Hochrisiko-Einstufung",
+    "input": "Ja, ich hatte einen Bewusstseinsverlust",
+    "output": "Ein Bewusstseinsverlust ist ein sehr ernst zu nehmender Befund. Unabhängig vom bisherigen Score werden Sie sofort zum Hochrisiko-Pathway (D3 - rot) weitergeleitet.",
+    "metadata": {
+      "module": "C",
+      "step": "consciousness_loss_positive",
+      "condition": "consciousness_loss_yes",
+      "risk_level": "high",
+      "next_module": "D3",
+      "risk_color": "red",
+      "override_score": true
+    }
+  },
+  {
+    "id": "C_042",
+    "instruction": "Kein Bewusstseinsverlust - Weiter mit Episoden-Vergleich",
+    "input": "Nein, ich hatte keinen Bewusstseinsverlust",
+    "output": "Das ist beruhigend. Nun möchte ich Ihre aktuellen Beschwerden mit früheren Episoden vergleichen. Können Sie die aktuellen Beschwerden mit vorherigen Episoden vergleichen?",
+    "metadata": {
+      "module": "C",
+      "step": "episode_comparison_question",
+      "condition": "consciousness_loss_no",
+      "next_steps": ["C_043", "C_044"]
+    }
+  },
+  {
+    "id": "C_043",
+    "instruction": "Episoden-Vergleich möglich - Detaillierte Bewertung",
+    "input": "Ja, ich kann die Episoden vergleichen",
+    "output": "Sehr gut. Wie würden Sie Ihre aktuellen Beschwerden im Vergleich zu vorherigen Episoden einschätzen: gleich, etwas anders oder ganz anders (schwerer)?",
+    "metadata": {
+      "module": "C",
+      "step": "episode_comparison_details",
+      "condition": "comparison_possible",
+      "next_steps": ["C_045", "C_046", "C_047", "C_048"]
+    }
+  },
+  {
+    "id": "C_044",
+    "instruction": "Episoden-Vergleich nicht möglich - Direkte Risikobewertung",
+    "input": "Nein, ich kann die Episoden nicht vergleichen",
+    "output": "Das ist verständlich. Wir werden Ihre Risikobewertung basierend auf den aktuellen Symptomen vornehmen.",
+    "metadata": {
+      "module": "C",
+      "step": "no_comparison_possible",
+      "condition": "comparison_not_possible",
+      "next_steps": ["C_049"]
+    }
+  },
+  {
+    "id": "C_045",
+    "instruction": "Beschwerden gleich wie früher - Keine zusätzlichen Punkte",
+    "input": "Die Beschwerden sind gleich wie bei früheren Episoden",
+    "output": "Die Beschwerden sind vergleichbar mit früheren Episoden (+0 Punkte). Wir führen nun die finale Risikobewertung durch.",
+    "metadata": {
+      "module": "C",
+      "step": "symptoms_same",
+      "condition": "symptoms_equal",
+      "score_points": 0,
+      "next_steps": ["C_049"]
+    }
+  },
+  {
+    "id": "C_046",
+    "instruction": "Beschwerden etwas anders - Moderate Punktevergabe",
+    "input": "Die Beschwerden sind etwas anders als früher",
+    "output": "Die Beschwerden sind etwas anders als früher (+2 Punkte). Wir führen nun die finale Risikobewertung durch.",
+    "metadata": {
+      "module": "C",
+      "step": "symptoms_somewhat_different",
+      "condition": "symptoms_somewhat_different",
+      "score_points": 2,
+      "next_steps": ["C_049"]
+    }
+  },
+  {
+    "id": "C_047",
+    "instruction": "Beschwerden ganz anders (leichter) - Keine Punkte",
+    "input": "Die Beschwerden sind ganz anders - sie sind leichter als früher",
+    "output": "Die Beschwerden sind leichter als früher (+0 Punkte). Das ist ein positives Zeichen. Wir führen nun die finale Risikobewertung durch.",
+    "metadata": {
+      "module": "C",
+      "step": "symptoms_much_lighter",
+      "condition": "symptoms_much_different_lighter",
+      "score_points": 0,
+      "next_steps": ["C_049"]
+    }
+  },
+  {
+    "id": "C_048",
+    "instruction": "Beschwerden ganz anders (schwerer) - Hohe Punktevergabe",
+    "input": "Die Beschwerden sind ganz anders - sie sind schwerer als früher",
+    "output": "Die Beschwerden sind schwerer als früher (+16 Punkte). Dies ist ein wichtiger Risikofaktor. Wir führen nun die finale Risikobewertung durch.",
+    "metadata": {
+      "module": "C",
+      "step": "symptoms_much_worse",
+      "condition": "symptoms_much_different_worse",
+      "score_points": 16,
+      "next_steps": ["C_049"]
+    }
+  },
+  {
+    "id": "C_049",
+    "instruction": "Finale Score-Bewertung und Risikostratifizierung",
+    "input": "Alle Bewertungen wurden abgeschlossen",
+    "output": "Basierend auf Ihren Angaben wird nun Ihr finaler Risikoscore berechnet und das entsprechende Risikoprofil bestimmt.",
+    "metadata": {
+      "module": "C",
+      "step": "final_risk_assessment",
+      "next_steps": ["C_050", "C_051", "C_052"]
+    }
+  },
+  {
+    "id": "C_050",
+    "instruction": "Finaler Score >15 - Hochrisiko D3 (rot)",
+    "input": "Mein finaler Score ist über 15 Punkte",
+    "output": "Ihr finaler Risikoscore liegt über 15 Punkten. Ihr Risikoprofil wird auf 'rot' (hohes Risiko) eingestuft. Sie werden zum Pathway D3 (Hohes Risiko) weitergeleitet. Eine enge Überwachung und möglicherweise sofortige medizinische Maßnahmen sind erforderlich.",
+    "metadata": {
+      "module": "C",
+      "step": "final_high_risk",
+      "condition": "final_score_above_15",
+      "risk_level": "high",
+      "next_module": "D3",
+      "risk_color": "red",
+      "pathway": "Hohes Risiko D3"
+    }
+  },
+  {
+    "id": "C_051",
+    "instruction": "Finaler Score >4 und ≤15 - Mittleres Risiko D2 (gelb)",
+    "input": "Mein finaler Score liegt zwischen 5 und 15 Punkten",
+    "output": "Ihr finaler Risikoscore liegt zwischen 5 und 15 Punkten. Ihr Risikoprofil wird auf 'gelb' (mittleres Risiko) eingestuft. Sie werden zum Pathway D2 (Mittleres Risiko) weitergeleitet. Eine regelmäßige Überwachung ist empfohlen.",
+    "metadata": {
+      "module": "C",
+      "step": "final_medium_risk",
+      "condition": "final_score_5_to_15",
+      "risk_level": "medium",
+      "next_module": "D2",
+      "risk_color": "yellow",
+      "pathway": "Mittleres Risiko D2"
+    }
+  },
+  {
+    "id": "C_052",
+    "instruction": "Finaler Score ≤4 - Niedriges Risiko D1 (grün)",
+    "input": "Mein finaler Score ist 4 Punkte oder darunter",
+    "output": "Ihr finaler Risikoscore liegt bei 4 Punkten oder darunter. Ihr Risikoprofil wird auf 'grün' (niedriges Risiko) eingestuft. Sie werden zum Pathway D1 (Niedriges Risiko) weitergeleitet. Basis-Überwachung und Selbstmanagement-Strategien werden empfohlen.",
+    "metadata": {
+      "module": "C",
+      "step": "final_low_risk",
+      "condition": "final_score_4_or_below",
+      "risk_level": "low",
+      "next_module": "D1",
+      "risk_color": "green",
+      "pathway": "Niedriges Risiko D1"
+    }
+  },
+  {
+    "id": "D1_001",
+    "instruction": "Patient aus Dialog C an D1-Pathway - Niedriges Risiko. Erste Herzfrequenz-Bewertung durchführen.",
+    "input": "Ich komme aus dem Risiko-Dialog und wurde als 'niedriges Risiko' eingestuft. Meine aktuelle Herzfrequenz beträgt 110 Schläge pro Minute.",
+    "output": "Bei einer Herzfrequenz von 110 bpm (>100 bpm) werden wir zunächst Ihre aktuelle Medikation prüfen. Dies hilft uns, die beste Behandlungsstrategie für Sie zu wählen. Nehmen Sie derzeit regelmäßig Beta-Blocker ein?",
+    "metadata": {
+      "module": "D1",
+      "step": "hr_assessment_entry",
+      "condition": "HF_over_100",
+      "next_steps": ["beta_blocker_check"],
+      "source_module": "C",
+      "risk_level": "low"
+    }
+  },
+  {
+    "id": "D1_002", 
+    "instruction": "Patient aus Dialog C mit Herzfrequenz unter 100 bpm - direkter Übergang zu Medikamentenbewertung.",
+    "input": "Meine Herzfrequenz liegt bei 85 Schlägen pro Minute.",
+    "output": "Ihre Herzfrequenz von 85 bpm liegt im normalen Bereich. Wir prüfen nun, ob Sie aktuell Notfall-Medikamente zur Verfügung haben. Haben Sie Flecainid zu Hause vorrätig?",
+    "metadata": {
+      "module": "D1",
+      "step": "hr_assessment_normal",
+      "condition": "HF_under_100",
+      "next_steps": ["flecainid_check"],
+      "risk_level": "low"
+    }
+  },
+  {
+    "id": "D1_003",
+    "instruction": "Beta-Blocker Medikationscheck - Patient nimmt regelmäßig Beta-Blocker ein.",
+    "input": "Ja, ich nehme täglich Metoprolol 50mg morgens ein.",
+    "output": "Sehr gut, Sie nehmen bereits regelmäßig Beta-Blocker ein. Dies ist wichtig für die Kontrolle Ihrer Herzfrequenz und kann bei der Vorbeugung von Vorhofflimmer-Episoden helfen. Die Beta-Blocker können die Herzfrequenz senken und den Herzrhythmus stabilisieren. Haben Sie außerdem Flecainid für den Notfall zu Hause?",
+    "metadata": {
+      "module": "D1", 
+      "step": "beta_blocker_positive",
+      "condition": "regular_beta_blocker_intake",
+      "next_steps": ["flecainid_check"],
+      "medication": "beta_blocker_confirmed"
+    }
+  },
+  {
+    "id": "D1_004",
+    "instruction": "Beta-Blocker Medikationscheck - Patient nimmt keine Beta-Blocker ein, Aufklärung erforderlich.",
+    "input": "Nein, ich nehme keine Beta-Blocker ein.",
+    "output": "Beta-Blocker sind wichtige Medikamente bei Vorhofflimmer, da sie die Herzfrequenz kontrollieren und das Risiko für weitere Episoden senken können. Sie wirken, indem sie die Wirkung von Stresshormonen auf das Herz reduzieren. Ich empfehle Ihnen, eine Morgen- oder Abenddosis gemäß ärztlicher Verschreibung einzunehmen. Bitte beachten Sie, dass Beta-Blocker etwa 1-2 Stunden brauchen, um ihre volle Wirkung zu entfalten. Mögliche Nebenwirkungen können Müdigkeit oder niedriger Blutdruck sein.",
+    "metadata": {
+      "module": "D1",
+      "step": "beta_blocker_negative_education", 
+      "condition": "no_beta_blocker_intake",
+      "next_steps": ["flecainid_check"],
+      "medication": "beta_blocker_education_provided"
+    }
+  },
+  {
+    "id": "D1_005",
+    "instruction": "Flecainid-Verfügbarkeitscheck - Patient hat Flecainid verfügbar.",
+    "input": "Ja, ich habe Flecainid 100mg Tabletten zu Hause.",
+    "output": "Ausgezeichnet, Sie haben Flecainid als Notfall-Medikament verfügbar. Flecainid ist ein Antiarrhythmikum, das bei akuten Vorhofflimmer-Episoden eingesetzt wird, um den normalen Herzrhythmus wiederherzustellen. Nehmen Sie das Medikament bitte nur nach ärztlicher Anordnung ein. Die Wirkung tritt normalerweise innerhalb von 1-3 Stunden ein. Beachten Sie mögliche Nebenwirkungen wie Schwindel oder Sehstörungen und nehmen Sie das Medikament nicht bei niedrigem Blutdruck ein.",
+    "metadata": {
+      "module": "D1",
+      "step": "flecainid_available_education",
+      "condition": "flecainid_available",
+      "next_steps": ["intervention_selection"],
+      "medication": "flecainid_available_confirmed"
+    }
+  },
+  {
+    "id": "D1_006",
+    "instruction": "Flecainid-Verfügbarkeitscheck - Patient hat kein Flecainid, Übergang zu Interventionen.",
+    "input": "Nein, ich habe kein Flecainid zu Hause.",
+    "output": "Das ist in Ordnung. Da Sie im niedrigen Risikobereich sind, konzentrieren wir uns auf nicht-medikamentöse Ansätze zur Symptomlinderung. Wir haben verschiedene bewährte Methoden zur Verfügung, die Ihnen helfen können. Möchten Sie Atem- und Entspannungsübungen durchführen oder bevorzugen Sie Chatbot-Unterstützung und Wissensmodule?",
+    "metadata": {
+      "module": "D1",
+      "step": "flecainid_not_available",
+      "condition": "no_flecainid_available", 
+      "next_steps": ["intervention_selection"],
+      "medication": "no_flecainid_available"
+    }
+  },
+  {
+    "id": "D1_007",
+    "instruction": "Interventionsauswahl - Patient möchte Atem- und Entspannungsübungen.",
+    "input": "Ich würde gerne Atem- und Entspannungsübungen machen.",
+    "output": "Eine ausgezeichnete Wahl! Atem- und Entspannungsübungen können sehr wirksam bei der Beruhigung des Nervensystems und der Reduzierung von Vorhofflimmer-Symptomen sein. Möchten Sie mit Atemübungen beginnen oder bevorzugen Sie Entspannungsübungen?",
+    "metadata": {
+      "module": "D1",
+      "step": "intervention_breathing_relaxation",
+      "condition": "chose_breathing_relaxation",
+      "next_steps": ["breathing_vs_relaxation_choice"],
+      "intervention_type": "breathing_relaxation"
+    }
+  },
+  {
+    "id": "D1_008",
+    "instruction": "Interventionsauswahl - Patient möchte Chatbot-Unterstützung und Wissensmodule.",
+    "input": "Ich hätte gerne Chatbot-Unterstützung und Zugang zu Wissensmodulen.",
+    "output": "Sehr gut! Digitale Unterstützung kann Ihnen helfen, mehr über Vorhofflimmer zu lernen und sich besser zu fühlen. Möchten Sie eine Chatbot-Konversation für persönliche Unterstützung oder bevorzugen Sie den Zugang zu Wissensmodulen und Videos?",
+    "metadata": {
+      "module": "D1",
+      "step": "intervention_digital_support", 
+      "condition": "chose_digital_support",
+      "next_steps": ["chatbot_vs_knowledge_choice"],
+      "intervention_type": "digital_support"
+    }
+  },
+  {
+    "id": "D1_009",
+    "instruction": "Atemübungen-Anleitung für D1-Patienten mit flexibler Zeitgestaltung.",
+    "input": "Ich möchte mit Atemübungen beginnen.",
+    "output": "Perfekt! Ich leite Sie durch beruhigende Atemübungen. Diese dauern etwa 1 Stunde und Sie können jederzeit pausieren, wenn Sie sich besser fühlen. Setzen Sie sich bequem hin und beginnen Sie mit einer 4-7-8 Atemtechnik: 4 Sekunden einatmen, 7 Sekunden anhalten, 8 Sekunden ausatmen. Wiederholen Sie dies in Ihrem eigenen Tempo. Diese Übung aktiviert Ihr parasympathisches Nervensystem und kann helfen, Ihr Herz zu beruhigen.",
+    "metadata": {
+      "module": "D1",
+      "step": "breathing_exercises_start",
+      "condition": "chose_breathing_exercises",
+      "next_steps": ["breathing_continuation_check"],
+      "timing": "1_hour_flexible",
+      "intervention_active": "breathing_exercises"
+    }
+  },
+  {
+    "id": "D1_010",
+    "instruction": "Entspannungsübungen-Anleitung für D1-Patienten.",
+    "input": "Ich möchte lieber Entspannungsübungen machen.",
+    "output": "Eine wunderbare Wahl! Entspannungsübungen können sehr effektiv sein. Ich führe Sie durch eine progressive Muskelentspannung, die etwa 1 Stunde dauert. Sie können jederzeit aufhören, wenn Sie sich besser fühlen. Beginnen Sie, indem Sie alle Muskeln in Ihren Füßen für 5 Sekunden anspannen, dann vollständig entspannen. Spüren Sie den Unterschied zwischen Anspannung und Entspannung. Arbeiten Sie sich langsam nach oben vor - Waden, Oberschenkel, Bauch, Arme, Schultern und Gesicht.",
+    "metadata": {
+      "module": "D1",
+      "step": "relaxation_exercises_start",
+      "condition": "chose_relaxation_exercises", 
+      "next_steps": ["relaxation_continuation_check"],
+      "timing": "1_hour_flexible",
+      "intervention_active": "relaxation_exercises"
+    }
+  },
+  {
+    "id": "D1_011",
+    "instruction": "Chatbot-Unterstützung für D1-Patienten mit manueller Abbruch-Option.",
+    "input": "Ich hätte gerne eine Chatbot-Konversation.",
+    "output": "Gerne starte ich eine beruhigende Chatbot-Konversation mit Ihnen. Unser Chatbot wird Ihnen helfen, sich entspannter zu fühlen und Ihre Sorgen bezüglich des Vorhofflimmerns zu besprechen. Sie können die Konversation jederzeit beenden, wenn Sie sich besser fühlen. Der Chatbot wird Ihnen Fragen zu Ihrem Befinden stellen und beruhigende Informationen teilen. Möchten Sie beginnen?",
+    "metadata": {
+      "module": "D1",
+      "step": "chatbot_start",
+      "condition": "chose_chatbot",
+      "next_steps": ["chatbot_continuation_check"],
+      "timing": "manual_termination_available",
+      "intervention_active": "chatbot_conversation"
+    }
+  },
+  {
+    "id": "D1_012",
+    "instruction": "Wissensmodule und Videos für D1-Patienten.",
+    "input": "Ich möchte gerne Wissensmodule und Videos ansehen.",
+    "output": "Ausgezeichnet! Ich stelle Ihnen speziell ausgewählte Wissensmodule und Videos über Vorhofflimmer zur Verfügung. Diese helfen Ihnen, Ihre Erkrankung besser zu verstehen und geben Tipps für den Alltag. Sie können diese in Ihrem eigenen Tempo durchgehen und jederzeit pausieren. Die Inhalte umfassen: Grundlagen des Vorhofflimmerns, Lifestyle-Tipps, Entspannungstechniken und wann Sie einen Arzt kontaktieren sollten. Sie haben die volle Kontrolle über die Dauer.",
+    "metadata": {
+      "module": "D1",
+      "step": "knowledge_modules_start",
+      "condition": "chose_knowledge_modules",
+      "next_steps": ["knowledge_modules_continuation_check"],
+      "timing": "manual_termination_available", 
+      "intervention_active": "knowledge_modules"
+    }
+  },
+  {
+    "id": "D1_013",
+    "instruction": "Check nach Interventionen - Patient möchte weitermachen.",
+    "input": "Ja, ich möchte die Übungen/das Programm fortsetzen.",
+    "output": "Das ist wunderbar! Ich freue mich, dass Sie von der aktuellen Intervention profitieren. Setzen Sie gerne fort - nehmen Sie sich die Zeit, die Sie brauchen. Da Sie im niedrigen Risikobereich sind, können Sie die Aktivität in Ihrem eigenen Tempo durchführen. Ich werde in regelmäßigen Abständen nachfragen, wie es Ihnen geht.",
+    "metadata": {
+      "module": "D1",
+      "step": "intervention_continuation_positive",
+      "condition": "wants_to_continue",
+      "next_steps": ["intervention_monitoring"],
+      "patient_autonomy": "high"
+    }
+  },
+  {
+    "id": "D1_014",
+    "instruction": "Check nach Interventionen - Patient möchte stoppen, Angebotszählung.",
+    "input": "Nein, ich fühle mich jetzt besser und möchte aufhören.",
+    "output": "Das freut mich sehr zu hören! Es ist ein positives Zeichen, dass Sie sich besser fühlen. Da wir Ihnen gerne weitere Unterstützung anbieten möchten, prüfe ich kurz, welche Optionen Sie bereits genutzt haben. Möchten Sie weitere Maßnahmen ausprobieren oder sind Sie mit der aktuellen Verbesserung zufrieden?",
+    "metadata": {
+      "module": "D1",
+      "step": "intervention_termination_check",
+      "condition": "wants_to_stop_feeling_better",
+      "next_steps": ["offers_tracking_check"],
+      "symptom_improvement": true
+    }
+  },
+  {
+    "id": "D1_015",
+    "instruction": "Angebotsverfolgung - Patient hat noch keine 2 Angebote wahrgenommen.",
+    "input": "Ich würde gerne noch etwas anderes ausprobieren.",
+    "output": "Sehr gerne! Da Sie noch flexibel weitere Optionen nutzen können, haben Sie die Wahl zwischen verschiedenen Ansätzen. Sie können zwischen Atem-/Entspannungsübungen oder Chatbot-Konversation/Wissensmodulen wählen. Was spricht Sie mehr an?",
+    "metadata": {
+      "module": "D1",
+      "step": "additional_intervention_offer",
+      "condition": "less_than_2_offers_used",
+      "next_steps": ["intervention_selection"],
+      "offers_used": "under_limit"
+    }
+  },
+  {
+    "id": "D1_016",
+    "instruction": "Erster Check-In nach Interventionen - EKG-Durchführung.",
+    "input": "Ich habe die Entspannungsübungen beendet. Wie geht es jetzt weiter?",
+    "output": "Wunderbar, dass Sie die Übungen durchgeführt haben! Nun führen wir Ihren ersten Check-In durch. Bitte führen Sie ein EKG mit Ihrem Gerät durch, damit wir sehen können, ob noch Vorhofflimmer vorliegt. Dieses EKG hilft uns zu entscheiden, wie wir weiter vorgehen.",
+    "metadata": {
+      "module": "D1",
+      "step": "first_checkin_ekg",
+      "condition": "intervention_completed",
+      "next_steps": ["vhf_assessment"],
+      "checkin_number": 1
+    }
+  },
+  {
+    "id": "D1_017",
+    "instruction": "VHF-Bewertung nach 1. Check-In - kein VHF mehr erkannt.",
+    "input": "Das EKG zeigt normalen Sinusrhythmus, kein Vorhofflimmer.",
+    "output": "Das sind ausgezeichnete Nachrichten! Ihr EKG zeigt normalen Sinusrhythmus - das Vorhofflimmer ist nicht mehr erkennbar. Bei niedrigem Risiko wie in Ihrem Fall ist eine Konsultation des Arztes in den regulären Intervallen völlig ausreichend. Ich leite Sie nun zur postakuten Kontaktaufnahme (Modul E) weiter, wo Sie weitere Unterstützung und Nachsorge-Informationen erhalten.",
+    "metadata": {
+      "module": "D1",
+      "step": "vhf_resolved_positive",
+      "condition": "no_vhf_detected", 
+      "next_steps": ["module_e_transition"],
+      "next_module": "E",
+      "outcome": "vhf_resolved"
+    }
+  },
+  {
+    "id": "D1_018",
+    "instruction": "VHF-Bewertung nach 1. Check-In - VHF weiterhin vorhanden, Symptombewertung.",
+    "input": "Das EKG zeigt noch immer Vorhofflimmer.",
+    "output": "Ich verstehe, dass das EKG noch Vorhofflimmer zeigt. Das ist nicht ungewöhnlich, und wir haben weitere Schritte zur Verfügung. Zunächst ist es wichtig zu wissen: Fühlen Sie sich insgesamt besser als zu Beginn, oder sind Ihre Symptome unverändert bzw. schlechter geworden?",
+    "metadata": {
+      "module": "D1",
+      "step": "vhf_persistent_symptom_check",
+      "condition": "vhf_still_present",
+      "next_steps": ["symptom_improvement_assessment"],
+      "vhf_status": "persistent"
+    }
+  },
+  {
+    "id": "D1_019",
+    "instruction": "Symptomverbesserung festgestellt - weitere Maßnahmen anbieten.",
+    "input": "Ja, ich fühle mich deutlich besser, auch wenn das EKG noch Vorhofflimmer zeigt.",
+    "output": "Das ist sehr ermutigend! Auch wenn das EKG noch Vorhofflimmer zeigt, ist eine Symptomverbesserung ein sehr positives Zeichen. Da Sie sich besser fühlen, können wir weitere unterstützende Maßnahmen anbieten. Möchten Sie zusätzliche Entspannungsübungen oder Chatbot-Unterstützung nutzen?",
+    "metadata": {
+      "module": "D1",
+      "step": "symptom_improvement_confirmed",
+      "condition": "symptoms_improved",
+      "next_steps": ["additional_measures_offer"],
+      "symptom_status": "improved"
+    }
+  },
+  {
+    "id": "D1_020",
+    "instruction": "Symptomverschlechterung festgestellt - Risikoerhöhung und Weiterleitung.",
+    "input": "Nein, ich fühle mich eigentlich schlechter als vorher.",
+    "output": "Vielen Dank, dass Sie mir das mitteilen. Eine Symptomverschlechterung nehmen wir sehr ernst. In diesem Fall müssen wir Ihr Risikoprofil neu bewerten und Sie zu einem höheren Versorgungslevel weiterleiten. Ich leite Sie nun zu Dialog C weiter, wo eine erneute Risikobewertung durchgeführt wird.",
+    "metadata": {
+      "module": "D1",
+      "step": "symptom_worsening_escalation",
+      "condition": "symptoms_worsened",
+      "next_steps": ["dialog_c_escalation"],
+      "next_module": "C",
+      "escalation_reason": "symptom_deterioration"
+    }
+  },
+  {
+    "id": "D1_021",
+    "instruction": "24h-Konsultationswunsch-Check für weitere Betreuung.",
+    "input": "Ich würde gerne in 24 Stunden noch einmal Kontakt aufnehmen.",
+    "output": "Das ist eine sehr vernünftige Entscheidung! Eine Nachkontrolle in 24 Stunden gibt uns die Möglichkeit zu sehen, wie sich Ihr Zustand entwickelt hat. Ich werde Sie in 24 Stunden kontaktieren und wir führen dann Ihren zweiten Check-In durch.",
+    "metadata": {
+      "module": "D1",
+      "step": "24h_consultation_scheduled",
+      "condition": "wants_24h_consultation",
+      "next_steps": ["second_checkin_24h"],
+      "timing": "nach_24h",
+      "checkin_scheduled": 2
+    }
+  },
+  {
+    "id": "D1_022",
+    "instruction": "24h-Konsultation abgelehnt - direkte Weiterleitung zur Nachsorge.",
+    "input": "Nein danke, ich denke das ist nicht nötig.",
+    "output": "Das verstehe ich gut. Da Sie sich insgesamt stabil fühlen und im niedrigen Risikobereich sind, ist das völlig in Ordnung. Ich leite Sie direkt zur postakuten Kontaktaufnahme (Modul E) weiter, wo Sie abschließende Informationen und Empfehlungen für die nächsten Tage erhalten.",
+    "metadata": {
+      "module": "D1",
+      "step": "consultation_declined_direct_transition",
+      "condition": "no_24h_consultation_wanted",
+      "next_steps": ["module_e_transition"],
+      "next_module": "E"
+    }
+  },
+  {
+    "id": "D1_023",
+    "instruction": "Zweiter Check-In nach 24h - EKG-Durchführung.",
+    "input": "Es sind 24 Stunden vergangen. Wie geht es Ihnen?",
+    "output": "Hallo! Schön, wieder von Ihnen zu hören. Wir führen nun Ihren zweiten Check-In durch. Bitte führen Sie erneut ein EKG durch, damit wir sehen können, wie sich Ihr Herzrhythmus entwickelt hat. Wie fühlen Sie sich denn im Vergleich zu gestern?",
+    "metadata": {
+      "module": "D1",
+      "step": "second_checkin_24h",
+      "condition": "after_24h_timer",
+      "next_steps": ["vhf_assessment_24h"],
+      "checkin_number": 2,
+      "timing": "nach_24h"
+    }
+  },
+  {
+    "id": "D1_024",
+    "instruction": "Dritter Check-In nach 48h - finaler EKG-Check.",
+    "input": "Es sind nun 48 Stunden seit Beginn vergangen.",
+    "output": "Vielen Dank für Ihre Geduld! Wir führen nun Ihren dritten und finalen Check-In durch. Bitte führen Sie ein letztes EKG durch. Dieser Check hilft uns zu entscheiden, ob weitere Maßnahmen nötig sind oder ob wir Sie zur abschließenden Nachsorge weiterleiten können.",
+    "metadata": {
+      "module": "D1",
+      "step": "third_checkin_48h",
+      "condition": "after_48h_timer", 
+      "next_steps": ["final_vhf_assessment"],
+      "checkin_number": 3,
+      "timing": "nach_48h"
+    }
+  },
+  {
+    "id": "D1_025",
+    "instruction": "Arzttermin-Empfehlung nach 3 Check-Ins ohne Verbesserung.",
+    "input": "Auch nach 48 Stunden zeigt das EKG noch Vorhofflimmer.",
+    "output": "Vielen Dank für Ihre Geduld während dieser 48 Stunden. Da das Vorhofflimmer weiterhin besteht, empfehle ich Ihnen, innerhalb der nächsten Woche einen Arzttermin zu vereinbaren. Dies ist bei anhaltendem Vorhofflimmer ein sinnvoller nächster Schritt, auch im niedrigen Risikobereich. Ihr Arzt kann weitere Behandlungsoptionen mit Ihnen besprechen.",
+    "metadata": {
+      "module": "D1",
+      "step": "doctor_appointment_recommendation",
+      "condition": "vhf_persistent_after_48h",
+      "next_steps": ["module_e_transition"],
+      "next_module": "E",
+      "recommendation": "doctor_appointment_1_week"
+    }
+  },
+  {
+    "id": "D1_026",
+    "instruction": "22h-Nachkontakt für Check-In-Angebote.",
+    "input": "Es sind 22 Stunden vergangen seit meinem letzten Kontakt.",
+    "output": "Hallo! Ich melde mich wie vereinbart nach 22 Stunden bei Ihnen. Wie geht es Ihnen? Möchten Sie weitere Unterstützung in Anspruch nehmen oder fühlen Sie sich soweit stabil? Bei niedrigem Risiko können wir sehr flexibel auf Ihre Bedürfnisse eingehen.",
+    "metadata": {
+      "module": "D1",
+      "step": "22h_followup_contact",
+      "condition": "after_22h_timer",
+      "next_steps": ["status_check_22h"],
+      "timing": "nach_22h"
+    }
+  },
+  {
+    "id": "D1_027",
+    "instruction": "Triggerfaktor-Anamnese für die letzten 24h vor der Episode - Infekt.",
+    "input": "Bevor wir abschließen, möchte ich fragen: Hatten Sie in den 24 Stunden vor der Vorhofflimmer-Episode einen Infekt oder Erkältung?",
+    "output": "Vielen Dank für diese wichtige Information! Infekte können tatsächlich Vorhofflimmer-Episoden auslösen, da sie das Herz-Kreislauf-System belasten. Diese Information hilft uns, Muster zu erkennen und zukünftige Episoden möglicherweise zu vermeiden. Hatten Sie außerdem Erbrechen oder Durchfall?",
+    "metadata": {
+      "module": "D1",
+      "step": "trigger_assessment_infection",
+      "condition": "24h_history_taking",
+      "next_steps": ["trigger_assessment_gi"],
+      "trigger_factors": ["infection"],
+      "documentation": "trigger_analysis"
+    }
+  },
+  {
+    "id": "D1_028",
+    "instruction": "Triggerfaktor-Dokumentation - Verschiedene Faktoren erfassen.",
+    "input": "Ja, ich hatte tatsächlich Stress auf der Arbeit und habe mehr Kaffee getrunken als sonst.",
+    "output": "Das sind sehr wichtige Informationen! Stress und erhöhter Koffeinkonsum sind bekannte Auslöser für Vorhofflimmer. Stress aktiviert das Nervensystem und Koffein kann die Herzfrequenz erhöhen. Ich dokumentiere dies für Sie. Diese Erkenntnisse können Ihnen helfen, zukünftige Episoden zu vermeiden, indem Sie auf Stressmanagement und moderaten Koffeinkonsum achten.",
+    "metadata": {
+      "module": "D1",
+      "step": "trigger_documentation_stress_caffeine",
+      "condition": "multiple_triggers_identified",
+      "next_steps": ["trigger_education_prevention"],
+      "trigger_factors": ["stress", "caffeine"],
+      "documentation": "triggers_documented"
+    }
+  },
+  {
+    "id": "D1_029",
+    "instruction": "Übergang zu Modul E - Postakute Kontaktaufnahme.",
+    "input": "Ich denke, ich bin jetzt bereit für die nächsten Schritte.",
+    "output": "Ausgezeichnet! Sie haben den D1-Pathway erfolgreich durchlaufen. Ihr niedrig-Risiko-Status bedeutet, dass Sie gut auf die Behandlung angesprochen haben. Ich leite Sie nun zur postakuten Kontaktaufnahme (Modul E) weiter. Dort erhalten Sie wichtige Informationen für die nächsten Tage und Wochen sowie Empfehlungen zur Vorbeugung weiterer Episoden.",
+    "metadata": {
+      "module": "D1", 
+      "step": "module_e_transition",
+      "condition": "d1_pathway_completed",
+      "next_steps": ["module_e_entry"],
+      "next_module": "E",
+      "pathway_outcome": "successful_completion"
+    }
+  },
+  {
+    "id": "D1_030",
+    "instruction": "Flexible Intervention-Verwaltung - Patient will zwischen Optionen wechseln.",
+    "input": "Ich habe die Atemübungen gemacht, möchte aber jetzt lieber Videos schauen.",
+    "output": "Das ist überhaupt kein Problem! Bei niedrigem Risiko haben Sie die volle Flexibilität, zwischen verschiedenen Ansätzen zu wechseln. Es ist wichtig, dass Sie sich mit der gewählten Methode wohl fühlen. Ich stelle Ihnen gerne die Wissensmodule und Videos zur Verfügung. Sie können diese in Ihrem eigenen Tempo durchgehen.",
+    "metadata": {
+      "module": "D1",
+      "step": "flexible_intervention_switch",
+      "condition": "intervention_preference_change",
+      "next_steps": ["knowledge_modules_start"],
+      "flexibility": "high_patient_autonomy"
+    }
+  },
+  {
+    "id": "D2_001",
+    "instruction": "Einstieg in Pathway D2 für mittleres Risiko - Blutdruckmessung",
+    "input": "Ich bin vom Dialog C hierher weitergeleitet worden. Was soll ich als erstes tun?",
+    "output": "Sie befinden sich nun im Pathway für mittleres Risiko (D2). Als erste Maßnahme führen Sie bitte eine Blutdruckmessung durch. Messen Sie Ihren systolischen und diastolischen Blutdruck und teilen Sie mir die Werte mit.",
+    "metadata": {
+      "module": "D2",
+      "step": "blood_pressure_measurement",
+      "next_steps": ["D2_002", "D2_003"],
+      "timing": "immediate",
+      "risk_level": "medium"
+    }
+  },
+  {
+    "id": "D2_002",
+    "instruction": "Herzfrequenz-Bewertung bei normalen Blutdruckwerten",
+    "input": "Mein Blutdruck ist 120/80 mmHg. Meine Herzfrequenz liegt bei 110 Schlägen pro Minute.",
+    "output": "Ihr Blutdruck ist im normalen Bereich. Bei einer Herzfrequenz über 100 Schlägen pro Minute prüfen wir nun Ihre Medikation. Nehmen Sie regelmäßig Beta-Blocker ein?",
+    "metadata": {
+      "module": "D2",
+      "step": "heart_rate_assessment",
+      "condition": "HF_over_100",
+      "next_steps": ["D2_004", "D2_005"],
+      "risk_level": "medium"
+    }
+  },
+  {
+    "id": "D2_003",
+    "instruction": "Kritischer systolischer Blutdruck - Risikoerhöhung",
+    "input": "Mein systolischer Blutdruck ist 85 mmHg",
+    "output": "Ihr systolischer Blutdruck von 85 mmHg ist kritisch niedrig (<90 mmHg). Dies erhöht Ihr Risikoprofil erheblich. Ihre Risikostrufe wird auf 'rot' (hohes Risiko) erhöht. Sie werden nun zum Pathway D3 (Hohes Risiko) weitergeleitet.",
+    "metadata": {
+      "module": "D2",
+      "step": "systolic_bp_check",
+      "condition": "BP_sys_under_90",
+      "risk_elevation": "high_risk_D3",
+      "next_module": "D3"
+    }
+  },
+  {
+    "id": "D2_004",
+    "instruction": "Beta-Blocker-Einnahme bestätigt",
+    "input": "Ja, ich nehme regelmäßig Beta-Blocker ein.",
+    "output": "Sehr gut. Bei regelmäßiger Beta-Blocker-Einnahme gebe ich Ihnen eine Indikationsbegründung: Beta-Blocker helfen bei Vorhofflimmern, die Herzfrequenz zu kontrollieren und können das Risiko für weitere Episoden reduzieren. Zusätzlich erhalten Sie Hinweise zu möglichen Nebenwirkungen und der theoretischen Wirkeintrittszeit.",
+    "metadata": {
+      "module": "D2",
+      "step": "beta_blocker_confirmed",
+      "medication": "beta_blocker",
+      "next_steps": ["D2_006"],
+      "timing": "medication_guidance"
+    }
+  },
+  {
+    "id": "D2_005",
+    "instruction": "Beta-Blocker-Einnahme nicht bestätigt",
+    "input": "Nein, ich nehme keine Beta-Blocker.",
+    "output": "Ich gebe Ihnen eine Empfehlung zur Einnahme von Beta-Blockern: Sie sollten eine Morgen- bzw. Abenddosis einnehmen, falls diese ärztlich verordnet wurde. Beta-Blocker können helfen, Ihre Herzfrequenz zu senken und weitere Vorhofflimmer-Episoden zu verhindern.",
+    "metadata": {
+      "module": "D2",
+      "step": "beta_blocker_recommendation",
+      "medication": "beta_blocker",
+      "next_steps": ["D2_006"],
+      "recommendation_type": "dosage_timing"
+    }
+  },
+  {
+    "id": "D2_006",
+    "instruction": "Flecainid-Verfügbarkeit prüfen",
+    "input": "Was ist als nächstes zu tun?",
+    "output": "Haben Sie das Medikament Flecainid verfügbar? Flecainid ist ein wichtiges Notfallmedikament bei Vorhofflimmern.",
+    "metadata": {
+      "module": "D2",
+      "step": "flecainid_availability",
+      "medication": "flecainid",
+      "next_steps": ["D2_007", "D2_008"]
+    }
+  },
+  {
+    "id": "D2_007",
+    "instruction": "Flecainid verfügbar - Indikationsbegründung",
+    "input": "Ja, ich habe Flecainid zu Hause.",
+    "output": "Ausgezeichnet. Flecainid ist ein Antiarrhythmikum, das bei akutem Vorhofflimmern zur Rhythmuskontrolle eingesetzt wird. Wenn Sie eine ärztliche Anordnung haben, nehmen Sie Flecainid laut dieser ärztlichen Anweisung ein. Beachten Sie dabei die Hinweise zu möglichen Nebenwirkungen und der theoretischen Wirkeintrittszeit von etwa 1-3 Stunden.",
+    "metadata": {
+      "module": "D2",
+      "step": "flecainid_available",
+      "medication": "flecainid",
+      "next_steps": ["D2_009"],
+      "medication_guidance": "according_to_doctor_order"
+    }
+  },
+  {
+    "id": "D2_008",
+    "instruction": "Flecainid nicht verfügbar",
+    "input": "Nein, ich habe kein Flecainid.",
+    "output": "Das ist in Ordnung. Wir setzen mit anderen Maßnahmen fort. Lassen Sie uns nun zu verschiedenen unterstützenden Interventionen übergehen, die Ihnen helfen können.",
+    "metadata": {
+      "module": "D2",
+      "step": "flecainid_not_available",
+      "next_steps": ["D2_009"]
+    }
+  },
+  {
+    "id": "D2_009",
+    "instruction": "Interventions-Auswahl: Hauptentscheidung",
+    "input": "Was für Maßnahmen können Sie mir anbieten?",
+    "output": "Ich kann Ihnen zwei Kategorien von Maßnahmen anbieten: 1) Atem- und Entspannungsübungen oder 2) Chatbot-Konversation und Wissensmodule. Welche Option würden Sie bevorzugen?",
+    "metadata": {
+      "module": "D2",
+      "step": "intervention_main_choice",
+      "intervention_categories": ["breathing_relaxation", "chatbot_knowledge"],
+      "next_steps": ["D2_010", "D2_015"],
+      "timing": "15min_intervals"
+    }
+  },
+  {
+    "id": "D2_010",
+    "instruction": "Atem-/Entspannungsübungen gewählt - Unterkategorien",
+    "input": "Ich möchte gerne Atem- und Entspannungsübungen machen.",
+    "output": "Sehr gut! Ich kann Ihnen zwei Arten anbieten: 1) Atemübungen oder 2) Entspannungsübungen. Welche möchten Sie durchführen?",
+    "metadata": {
+      "module": "D2",
+      "step": "breathing_relaxation_choice",
+      "intervention_type": "breathing_relaxation",
+      "next_steps": ["D2_011", "D2_012"]
+    }
+  },
+  {
+    "id": "D2_011",
+    "instruction": "Atemübungen durchführen",
+    "input": "Ich wähle die Atemübungen.",
+    "output": "Ausgezeichnet! Ich leite Sie nun für 15 Minuten zu Atemübungen an. Setzen Sie sich bequem hin, schließen Sie die Augen und atmen Sie langsam und tief. Atmen Sie 4 Sekunden ein, halten Sie 4 Sekunden an, atmen Sie 6 Sekunden aus. Wiederholen Sie dies ruhig. Nach 15 Minuten frage ich Sie, ob Sie fortfahren möchten.",
+    "metadata": {
+      "module": "D2",
+      "step": "breathing_exercises",
+      "intervention_type": "breathing",
+      "duration": "15min",
+      "next_steps": ["D2_013"],
+      "timing": "15_minute_cycles"
+    }
+  },
+  {
+    "id": "D2_012",
+    "instruction": "Entspannungsübungen durchführen",
+    "input": "Ich wähle die Entspannungsübungen.",
+    "output": "Perfekt! Ich leite Sie nun für 15 Minuten zu Entspannungsübungen an. Legen Sie sich bequem hin oder setzen Sie sich entspannt. Wir beginnen mit einer progressiven Muskelentspannung. Spannen Sie zunächst Ihre Füße für 5 Sekunden an, dann entspannen Sie sie vollständig. Arbeiten Sie sich langsam durch alle Muskelgruppen hoch.",
+    "metadata": {
+      "module": "D2",
+      "step": "relaxation_exercises",
+      "intervention_type": "relaxation",
+      "duration": "15min",
+      "next_steps": ["D2_014"],
+      "timing": "15_minute_cycles"
+    }
+  },
+  {
+    "id": "D2_013",
+    "instruction": "Atemübungen - Fortsetzung erfragen",
+    "input": "Die 15 Minuten sind vorbei.",
+    "output": "Wie fühlen Sie sich nach den Atemübungen? Möchten Sie die Übungen weiterhin ausführen oder sind Sie bereit für andere Maßnahmen?",
+    "metadata": {
+      "module": "D2",
+      "step": "breathing_continuation_check",
+      "intervention_type": "breathing",
+      "next_steps": ["D2_011", "D2_020"],
+      "decision_point": "continue_or_change"
+    }
+  },
+  {
+    "id": "D2_014",
+    "instruction": "Entspannungsübungen - Fortsetzung erfragen",
+    "input": "Die 15 Minuten sind vorbei.",
+    "output": "Wie fühlen Sie sich nach den Entspannungsübungen? Möchten Sie die Übungen weiterhin ausführen oder sind Sie bereit für andere Maßnahmen?",
+    "metadata": {
+      "module": "D2",
+      "step": "relaxation_continuation_check",
+      "intervention_type": "relaxation",
+      "next_steps": ["D2_012", "D2_020"],
+      "decision_point": "continue_or_change"
+    }
+  },
+  {
+    "id": "D2_015",
+    "instruction": "Chatbot/Wissensmodule gewählt - Unterkategorien",
+    "input": "Ich wähle Chatbot-Konversation und Wissensmodule.",
+    "output": "Sehr gut! Ich kann Ihnen anbieten: 1) Chatbot-Konversation oder 2) Wissensmodule und Videos. Was würden Sie bevorzugen?",
+    "metadata": {
+      "module": "D2",
+      "step": "chatbot_knowledge_choice",
+      "intervention_type": "chatbot_knowledge",
+      "next_steps": ["D2_016", "D2_017"]
+    }
+  },
+  {
+    "id": "D2_016",
+    "instruction": "Chatbot-Konversation starten",
+    "input": "Ich möchte mit dem Chatbot sprechen.",
+    "output": "Der Chatbot wird nun für 15 Minuten gestartet. Er wird mit Ihnen über Ihre Symptome sprechen, Ihnen Informationen über Vorhofflimmern geben und Ihre Fragen beantworten. Der Chatbot kann Ihnen helfen, Ihre Situation besser zu verstehen und Entspannung zu finden.",
+    "metadata": {
+      "module": "D2",
+      "step": "chatbot_conversation",
+      "intervention_type": "chatbot",
+      "duration": "15min",
+      "next_steps": ["D2_018"],
+      "timing": "15_minute_cycles"
+    }
+  },
+  {
+    "id": "D2_017",
+    "instruction": "Wissensmodule/Videos bereitstellen",
+    "input": "Ich möchte Wissensmodule und Videos ansehen.",
+    "output": "Ich stelle Ihnen nun für 15 Minuten Wissensmodule und Videos über Vorhofflimmern zur Verfügung. Diese enthalten Informationen über Ursachen, Behandlung, Lebensstil-Änderungen und Bewältigungsstrategien. Schauen Sie sich die Inhalte in Ihrem eigenen Tempo an.",
+    "metadata": {
+      "module": "D2",
+      "step": "knowledge_modules",
+      "intervention_type": "knowledge",
+      "duration": "15min",
+      "next_steps": ["D2_019"],
+      "timing": "15_minute_cycles"
+    }
+  },
+  {
+    "id": "D2_018",
+    "instruction": "Chatbot-Konversation - Fortsetzung erfragen",
+    "input": "Die 15 Minuten Chatbot-Gespräch sind vorbei.",
+    "output": "Wie war das Gespräch mit dem Chatbot für Sie? Möchten Sie die Chatbot-Konversation weiterhin ausführen oder zu anderen Maßnahmen wechseln?",
+    "metadata": {
+      "module": "D2",
+      "step": "chatbot_continuation_check",
+      "intervention_type": "chatbot",
+      "next_steps": ["D2_016", "D2_020"],
+      "decision_point": "continue_or_change"
+    }
+  },
+  {
+    "id": "D2_019",
+    "instruction": "Wissensmodule - Fortsetzung erfragen",
+    "input": "Ich habe mir die Wissensmodule angeschaut.",
+    "output": "Waren die Wissensmodule und Videos hilfreich für Sie? Möchten Sie weitere Inhalte ansehen oder zu anderen Maßnahmen wechseln?",
+    "metadata": {
+      "module": "D2",
+      "step": "knowledge_continuation_check",
+      "intervention_type": "knowledge",
+      "next_steps": ["D2_017", "D2_020"],
+      "decision_point": "continue_or_change"
+    }
+  },
+  {
+    "id": "D2_020",
+    "instruction": "Zwei-Angebote-Regel prüfen",
+    "input": "Ich möchte zu anderen Maßnahmen wechseln.",
+    "output": "Haben Sie bereits 2 Angebote wahrgenommen? Falls ja, leiten wir Sie zu weiteren Maßnahmen weiter. Falls nein, können Sie ein weiteres Angebot aus unserem Spektrum wählen.",
+    "metadata": {
+      "module": "D2",
+      "step": "two_offers_check",
+      "rule": "maximum_two_offers",
+      "next_steps": ["D2_021", "D2_009"],
+      "decision_point": "offer_limit_reached"
+    }
+  },
+  {
+    "id": "D2_021",
+    "instruction": "Weitere Maßnahmen nach zwei Angeboten",
+    "input": "Ja, ich habe bereits 2 Angebote wahrgenommen.",
+    "output": "Sehr gut. Möchten Sie weitere Maßnahmen in Anspruch nehmen? Wir können nun zu spezifischeren Check-In-Verfahren übergehen oder andere unterstützende Maßnahmen anbieten.",
+    "metadata": {
+      "module": "D2",
+      "step": "further_measures_inquiry",
+      "rule": "after_two_offers",
+      "next_steps": ["D2_022", "D2_025"],
+      "progression": "advanced_measures"
+    }
+  },
+  {
+    "id": "D2_022",
+    "instruction": "1. Check-In - EKG durchführen",
+    "input": "Ja, ich möchte weitere Maßnahmen.",
+    "output": "Ausgezeichnet. Wir führen nun den 1. Check-In durch. Bitte führen Sie ein EKG durch und teilen Sie mir das Ergebnis mit. Dies hilft uns, Ihren aktuellen Rhythmus zu beurteilen.",
+    "metadata": {
+      "module": "D2",
+      "step": "first_checkin_ekg",
+      "check_in": "first",
+      "procedure": "EKG",
+      "next_steps": ["D2_023", "D2_024"]
+    }
+  },
+  {
+    "id": "D2_023",
+    "instruction": "VHF erkannt beim 1. Check-In",
+    "input": "Das EKG zeigt Vorhofflimmern.",
+    "output": "Ich erkenne Vorhofflimmern in Ihrem EKG. Sind Ihre Symptome schlechter geworden im Vergleich zu vorhin?",
+    "metadata": {
+      "module": "D2",
+      "step": "vhf_detected_first_checkin",
+      "condition": "VHF_detected",
+      "next_steps": ["D2_026", "D2_027"],
+      "assessment": "symptom_comparison"
+    }
+  },
+  {
+    "id": "D2_024",
+    "instruction": "Kein VHF beim 1. Check-In",
+    "input": "Das EKG zeigt normalen Rhythmus, kein Vorhofflimmern.",
+    "output": "Das ist eine gute Nachricht! Es wurde kein Vorhofflimmern erkannt. Die Konsultation Ihres Arztes im vorgeschriebenen Intervall ist ausreichend. Wir leiten die Einleitung von Modul E (Postakute Kontaktaufnahme) ein.",
+    "metadata": {
+      "module": "D2",
+      "step": "no_vhf_first_checkin",
+      "condition": "no_VHF_detected",
+      "next_module": "E",
+      "outcome": "normal_rhythm_detected"
+    }
+  },
+  {
+    "id": "D2_025",
+    "instruction": "Keine weiteren Maßnahmen gewünscht",
+    "input": "Nein, ich möchte erstmal keine weiteren Maßnahmen.",
+    "output": "Das ist völlig in Ordnung. Möchten Sie eine Konsultation in 90 Minuten? Dies gibt uns die Möglichkeit, Ihren Zustand erneut zu bewerten.",
+    "metadata": {
+      "module": "D2",
+      "step": "no_further_measures",
+      "next_steps": ["D2_028", "D2_035"],
+      "timing_option": "90min_consultation"
+    }
+  },
+  {
+    "id": "D2_026",
+    "instruction": "Symptome verschlechtert - HF-Score vergleichen",
+    "input": "Ja, meine Symptome sind schlechter geworden.",
+    "output": "Ist Ihr aktueller Check-In-HF-Score höher als Ihr initialer HF-Score? Dies würde eine Verschlechterung Ihrer Symptomatik bestätigen.",
+    "metadata": {
+      "module": "D2",
+      "step": "symptoms_worsened",
+      "assessment": "HF_score_comparison",
+      "next_steps": ["D2_003", "D2_027"],
+      "escalation_criteria": "HF_score_increase"
+    }
+  },
+  {
+    "id": "D2_027",
+    "instruction": "Symptome verbessert oder unverändert",
+    "input": "Nein, meine Symptome sind besser oder unverändert.",
+    "output": "Das ist ermutigend. Sind Ihre Symptome besser geworden im Vergleich zu vorhin?",
+    "metadata": {
+      "module": "D2",
+      "step": "symptoms_stable_or_improved",
+      "assessment": "symptom_improvement",
+      "next_steps": ["D2_029", "D2_030"]
+    }
+  },
+  {
+    "id": "D2_028",
+    "instruction": "90-Minuten-Konsultation gewünscht",
+    "input": "Ja, ich möchte eine Konsultation in 90 Minuten.",
+    "output": "Sehr gut. Ich plane eine Konsultation für Sie in 90 Minuten. Sie werden automatisch benachrichtigt, wenn es Zeit für den 2. Check-In ist.",
+    "metadata": {
+      "module": "D2",
+      "step": "consultation_90min_scheduled",
+      "timing": "nach_90min",
+      "next_steps": ["D2_031"],
+      "automated_trigger": true
+    }
+  },
+  {
+    "id": "D2_029",
+    "instruction": "Symptome deutlich verbessert - HF-Score vergleichen",
+    "input": "Ja, meine Symptome sind deutlich besser geworden.",
+    "output": "Wunderbar! Ist Ihr aktueller Check-In-HF-Score niedriger als Ihr initialer HF-Score? Falls ja, könnte eine Umleitung zum Pathway D1 (Niedriges Risiko) angemessen sein.",
+    "metadata": {
+      "module": "D2",
+      "step": "symptoms_significantly_improved",
+      "assessment": "HF_score_decrease",
+      "next_steps": ["D2_030", "D2_045"],
+      "potential_downgrade": "D1"
+    }
+  },
+  {
+    "id": "D2_030",
+    "instruction": "Check-In-System fortsetzen",
+    "input": "Die Scores sind vergleichbar oder ich möchte im D2-Pathway bleiben.",
+    "output": "Wir setzen mit dem bewährten D2-Management fort. Möchten Sie weitere Maßnahmen in Anspruch nehmen?",
+    "metadata": {
+      "module": "D2",
+      "step": "continue_d2_management",
+      "next_steps": ["D2_032"],
+      "pathway": "remain_in_D2"
+    }
+  },
+  {
+    "id": "D2_031",
+    "instruction": "2. Check-In nach 90 Minuten - EKG",
+    "input": "Es sind 90 Minuten vergangen.",
+    "output": "Zeit für Ihren 2. Check-In. Bitte führen Sie erneut ein EKG durch und teilen Sie mir das Ergebnis mit.",
+    "metadata": {
+      "module": "D2",
+      "step": "second_checkin_ekg",
+      "check_in": "second",
+      "timing": "nach_90min",
+      "procedure": "EKG",
+      "next_steps": ["D2_023", "D2_024"]
+    }
+  },
+  {
+    "id": "D2_032",
+    "instruction": "Check-In-Verlauf bewerten",
+    "input": "Was kommt als nächstes?",
+    "output": "Basierend auf Ihrem bisherigen Verlauf frage ich: Welche Check-Ins haben Sie bereits durchgeführt? 1) Nur den 1. Check-In, 2) 1. und 2. Check-In oder 3) Alle drei Check-Ins?",
+    "metadata": {
+      "module": "D2",
+      "step": "checkin_progress_assessment",
+      "check_in_tracking": ["first", "second", "third"],
+      "next_steps": ["D2_028", "D2_033", "D2_034"]
+    }
+  },
+  {
+    "id": "D2_033",
+    "instruction": "Nach 22 Stunden - 3. Check-In",
+    "input": "Ich habe bereits 1. und 2. Check-In durchgeführt.",
+    "output": "Nach 22 Stunden führen wir den 3. Check-In durch. Bitte führen Sie ein EKG durch und teilen Sie mir das Ergebnis mit.",
+    "metadata": {
+      "module": "D2",
+      "step": "third_checkin_ekg",
+      "check_in": "third",
+      "timing": "nach_22h",
+      "procedure": "EKG",
+      "next_steps": ["D2_023", "D2_024"]
+    }
+  },
+  {
+    "id": "D2_034",
+    "instruction": "Empfehlung zur Arztkonsultation nach 3 Check-Ins",
+    "input": "Ich habe bereits alle drei Check-Ins durchgeführt.",
+    "output": "Sie haben bereits alle drei Check-Ins absolviert. Ich empfehle Ihnen eine zeitnahe Kontaktaufnahme mit Ihrem Arzt innerhalb von 24-48 Stunden für eine weiterführende Bewertung.",
+    "metadata": {
+      "module": "D2",
+      "step": "doctor_consultation_recommendation",
+      "check_in": "all_completed",
+      "recommendation": "doctor_contact_24_48h",
+      "next_steps": ["D2_035"]
+    }
+  },
+  {
+    "id": "D2_035",
+    "instruction": "Keine 90-Min-Konsultation gewünscht",
+    "input": "Nein, ich möchte keine Konsultation in 90 Minuten.",
+    "output": "Das ist in Ordnung. Möchten Sie Ihr Buddy-System aktivieren? Ihr Buddy kann informiert werden, um Sie zu unterstützen.",
+    "metadata": {
+      "module": "D2",
+      "step": "no_90min_consultation",
+      "next_steps": ["D2_036", "D2_037"],
+      "support_option": "buddy_system"
+    }
+  },
+  {
+    "id": "D2_036",
+    "instruction": "Buddy-System aktivieren",
+    "input": "Ja, bitte informieren Sie meinen Buddy.",
+    "output": "Ihr Buddy wird jetzt informiert. Er/Sie erhält eine Benachrichtigung über Ihre aktuelle Situation und kann Sie entsprechend unterstützen.",
+    "metadata": {
+      "module": "D2",
+      "step": "buddy_system_activated",
+      "social_support": "buddy_notification",
+      "next_steps": ["D2_037"]
+    }
+  },
+  {
+    "id": "D2_037",
+    "instruction": "Triggerfaktor-Anamnese einleiten",
+    "input": "Was kommt als nächstes?",
+    "output": "Wir führen nun eine wichtige Anamnese durch. Ich werde Sie nach verschiedenen Faktoren fragen, die in den 24 Stunden vor Ihrer Vorhofflimmer-Episode aufgetreten sein könnten. Dies hilft, Trigger zu identifizieren. Hatten Sie in den letzten 24 Stunden vor der Episode einen Infekt?",
+    "metadata": {
+      "module": "D2",
+      "step": "trigger_factor_anamnesis_start",
+      "timeframe": "24h_before_episode",
+      "trigger_assessment": "systematic_inquiry",
+      "next_steps": ["D2_038", "D2_039"]
+    }
+  },
+  {
+    "id": "D2_038",
+    "instruction": "Infekt als Triggerfaktor dokumentiert",
+    "input": "Ja, ich hatte einen Infekt.",
+    "output": "Infekt dokumentiert. Dies ist ein bekannter Triggerfaktor für Vorhofflimmern. Hatten Sie Erbrechen in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "infection_trigger_documented",
+      "trigger_factor": "infection",
+      "documentation": "confirmed",
+      "next_steps": ["D2_040", "D2_041"]
+    }
+  },
+  {
+    "id": "D2_039",
+    "instruction": "Kein Infekt - weiter zu Erbrechen",
+    "input": "Nein, ich hatte keinen Infekt.",
+    "output": "Kein Infekt dokumentiert. Hatten Sie Erbrechen in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_infection",
+      "trigger_factor": "infection",
+      "documentation": "negative",
+      "next_steps": ["D2_040", "D2_041"]
+    }
+  },
+  {
+    "id": "D2_040",
+    "instruction": "Erbrechen als Triggerfaktor dokumentiert",
+    "input": "Ja, ich hatte Erbrechen.",
+    "output": "Erbrechen dokumentiert. Dies kann durch Elektrolytstörungen Vorhofflimmern auslösen. Hatten Sie Durchfall in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "vomiting_trigger_documented",
+      "trigger_factor": "vomiting",
+      "documentation": "confirmed",
+      "next_steps": ["D2_042", "D2_043"]
+    }
+  },
+  {
+    "id": "D2_041",
+    "instruction": "Kein Erbrechen - weiter zu Durchfall",
+    "input": "Nein, ich hatte kein Erbrechen.",
+    "output": "Kein Erbrechen dokumentiert. Hatten Sie Durchfall in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_vomiting",
+      "trigger_factor": "vomiting",
+      "documentation": "negative",
+      "next_steps": ["D2_042", "D2_043"]
+    }
+  },
+  {
+    "id": "D2_042",
+    "instruction": "Durchfall als Triggerfaktor dokumentiert",
+    "input": "Ja, ich hatte Durchfall.",
+    "output": "Durchfall dokumentiert. Dies kann ebenfalls zu Elektrolytstörungen und Vorhofflimmern führen. Haben Sie Alkohol konsumiert in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "diarrhea_trigger_documented",
+      "trigger_factor": "diarrhea",
+      "documentation": "confirmed",
+      "next_steps": ["D2_044", "D2_046"]
+    }
+  },
+  {
+    "id": "D2_043",
+    "instruction": "Kein Durchfall - weiter zu Alkohol",
+    "input": "Nein, ich hatte keinen Durchfall.",
+    "output": "Kein Durchfall dokumentiert. Haben Sie Alkohol konsumiert in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_diarrhea",
+      "trigger_factor": "diarrhea",
+      "documentation": "negative",
+      "next_steps": ["D2_044", "D2_046"]
+    }
+  },
+  {
+    "id": "D2_044",
+    "instruction": "Alkohol als Triggerfaktor dokumentiert",
+    "input": "Ja, ich habe Alkohol getrunken.",
+    "output": "Alkohol dokumentiert. Alkohol ist ein sehr häufiger Trigger für Vorhofflimmern ('Holiday Heart Syndrome'). Hatten Sie Schlafentzug in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "alcohol_trigger_documented",
+      "trigger_factor": "alcohol",
+      "documentation": "confirmed",
+      "medical_term": "holiday_heart_syndrome",
+      "next_steps": ["D2_047", "D2_048"]
+    }
+  },
+  {
+    "id": "D2_045",
+    "instruction": "Umleitung zu Pathway D1 (Niedriges Risiko)",
+    "input": "Mein HF-Score ist deutlich gesunken und ich fühle mich viel besser.",
+    "output": "Aufgrund Ihrer deutlichen Verbesserung leite ich Sie zum Pathway D1 (Niedriges Risiko) weiter. Dort erhalten Sie ein angepasstes, weniger intensives Management.",
+    "metadata": {
+      "module": "D2",
+      "step": "transfer_to_d1",
+      "next_module": "D1",
+      "reason": "significant_improvement",
+      "HF_score_change": "decreased"
+    }
+  },
+  {
+    "id": "D2_046",
+    "instruction": "Kein Alkohol - weiter zu Schlafentzug",
+    "input": "Nein, ich habe keinen Alkohol getrunken.",
+    "output": "Kein Alkohol dokumentiert. Hatten Sie Schlafentzug in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_alcohol",
+      "trigger_factor": "alcohol",
+      "documentation": "negative",
+      "next_steps": ["D2_047", "D2_048"]
+    }
+  },
+  {
+    "id": "D2_047",
+    "instruction": "Schlafentzug als Triggerfaktor dokumentiert",
+    "input": "Ja, ich hatte Schlafentzug.",
+    "output": "Schlafentzug dokumentiert. Schlafmangel ist ein wichtiger Stressfaktor für das Herz. Hatten Sie Sex in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "sleep_deprivation_documented",
+      "trigger_factor": "sleep_deprivation",
+      "documentation": "confirmed",
+      "next_steps": ["D2_049", "D2_050"]
+    }
+  },
+  {
+    "id": "D2_048",
+    "instruction": "Kein Schlafentzug - weiter zu Sex",
+    "input": "Nein, ich hatte keinen Schlafentzug.",
+    "output": "Kein Schlafentzug dokumentiert. Hatten Sie Sex in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_sleep_deprivation",
+      "trigger_factor": "sleep_deprivation",
+      "documentation": "negative",
+      "next_steps": ["D2_049", "D2_050"]
+    }
+  },
+  {
+    "id": "D2_049",
+    "instruction": "Sex als Triggerfaktor dokumentiert",
+    "input": "Ja, ich hatte Sex.",
+    "output": "Sex dokumentiert. Körperliche Anstrengung und emotionale Erregung können Trigger sein. Hatten Sie Stress in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "sex_trigger_documented",
+      "trigger_factor": "sex",
+      "documentation": "confirmed",
+      "mechanism": "physical_emotional_stress",
+      "next_steps": ["D2_051", "D2_052"]
+    }
+  },
+  {
+    "id": "D2_050",
+    "instruction": "Kein Sex - weiter zu Stress",
+    "input": "Nein, ich hatte keinen Sex.",
+    "output": "Kein Sex dokumentiert. Hatten Sie Stress in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_sex",
+      "trigger_factor": "sex",
+      "documentation": "negative",
+      "next_steps": ["D2_051", "D2_052"]
+    }
+  },
+  {
+    "id": "D2_051",
+    "instruction": "Stress als Triggerfaktor dokumentiert",
+    "input": "Ja, ich hatte Stress.",
+    "output": "Stress dokumentiert. Psychischer Stress ist einer der häufigsten Trigger für Vorhofflimmern. Haben Sie Koffein konsumiert in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "stress_trigger_documented",
+      "trigger_factor": "stress",
+      "documentation": "confirmed",
+      "prevalence": "very_common_trigger",
+      "next_steps": ["D2_053", "D2_054"]
+    }
+  },
+  {
+    "id": "D2_052",
+    "instruction": "Kein Stress - weiter zu Koffein",
+    "input": "Nein, ich hatte keinen besonderen Stress.",
+    "output": "Kein besonderer Stress dokumentiert. Haben Sie Koffein konsumiert in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_stress",
+      "trigger_factor": "stress",
+      "documentation": "negative",
+      "next_steps": ["D2_053", "D2_054"]
+    }
+  },
+  {
+    "id": "D2_053",
+    "instruction": "Koffein als Triggerfaktor dokumentiert",
+    "input": "Ja, ich habe Koffein zu mir genommen.",
+    "output": "Koffein dokumentiert. Koffein kann die Herzfrequenz erhöhen und Vorhofflimmern auslösen. Haben Sie eine große Mahlzeit zu sich genommen in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "caffeine_trigger_documented",
+      "trigger_factor": "caffeine",
+      "documentation": "confirmed",
+      "mechanism": "heart_rate_increase",
+      "next_steps": ["D2_055", "D2_056"]
+    }
+  },
+  {
+    "id": "D2_054",
+    "instruction": "Kein Koffein - weiter zu großer Mahlzeit",
+    "input": "Nein, ich habe kein Koffein konsumiert.",
+    "output": "Kein Koffein dokumentiert. Haben Sie eine große Mahlzeit zu sich genommen in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_caffeine",
+      "trigger_factor": "caffeine",
+      "documentation": "negative",
+      "next_steps": ["D2_055", "D2_056"]
+    }
+  },
+  {
+    "id": "D2_055",
+    "instruction": "Große Mahlzeit als Triggerfaktor dokumentiert",
+    "input": "Ja, ich habe eine große Mahlzeit gegessen.",
+    "output": "Große Mahlzeit dokumentiert. Üppige Mahlzeiten können über den Vagusnerv Vorhofflimmern auslösen. Haben Sie Sport getrieben in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "large_meal_trigger_documented",
+      "trigger_factor": "large_meal",
+      "documentation": "confirmed",
+      "mechanism": "vagal_stimulation",
+      "next_steps": ["D2_057", "D2_058"]
+    }
+  },
+  {
+    "id": "D2_056",
+    "instruction": "Keine große Mahlzeit - weiter zu Sport",
+    "input": "Nein, ich habe keine besonders große Mahlzeit gegessen.",
+    "output": "Keine große Mahlzeit dokumentiert. Haben Sie Sport getrieben in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_large_meal",
+      "trigger_factor": "large_meal",
+      "documentation": "negative",
+      "next_steps": ["D2_057", "D2_058"]
+    }
+  },
+  {
+    "id": "D2_057",
+    "instruction": "Sport als Triggerfaktor dokumentiert",
+    "input": "Ja, ich habe Sport gemacht.",
+    "output": "Sport dokumentiert. Intensive körperliche Aktivität kann Vorhofflimmern auslösen. Hatten Sie Dehydratation in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "sports_trigger_documented",
+      "trigger_factor": "sports",
+      "documentation": "confirmed",
+      "mechanism": "intense_physical_activity",
+      "next_steps": ["D2_059", "D2_060"]
+    }
+  },
+  {
+    "id": "D2_058",
+    "instruction": "Kein Sport - weiter zu Dehydratation",
+    "input": "Nein, ich habe keinen Sport gemacht.",
+    "output": "Kein Sport dokumentiert. Hatten Sie Dehydratation in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_sports",
+      "trigger_factor": "sports",
+      "documentation": "negative",
+      "next_steps": ["D2_059", "D2_060"]
+    }
+  },
+  {
+    "id": "D2_059",
+    "instruction": "Dehydratation als Triggerfaktor dokumentiert",
+    "input": "Ja, ich war dehydriert.",
+    "output": "Dehydratation dokumentiert. Flüssigkeitsmangel kann Elektrolytstörungen verursachen. Hatten Sie hormonelle Faktoren (z.B. Menstruation, Schilddrüse) in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "dehydration_trigger_documented",
+      "trigger_factor": "dehydration",
+      "documentation": "confirmed",
+      "mechanism": "electrolyte_imbalance",
+      "next_steps": ["D2_061", "D2_062"]
+    }
+  },
+  {
+    "id": "D2_060",
+    "instruction": "Keine Dehydratation - weiter zu hormonellen Faktoren",
+    "input": "Nein, ich war nicht dehydriert.",
+    "output": "Keine Dehydratation dokumentiert. Hatten Sie hormonelle Faktoren (z.B. Menstruation, Schilddrüse) in den 24 Stunden vor der Episode?",
+    "metadata": {
+      "module": "D2",
+      "step": "no_dehydration",
+      "trigger_factor": "dehydration",
+      "documentation": "negative",
+      "next_steps": ["D2_061", "D2_062"]
+    }
+  },
+  {
+    "id": "D2_061",
+    "instruction": "Hormonelle Faktoren als Triggerfaktor dokumentiert",
+    "input": "Ja, es gab hormonelle Faktoren.",
+    "output": "Hormonelle Faktoren dokumentiert. Hormonelle Schwankungen können Vorhofflimmern beeinflussen. Die Triggerfaktor-Anamnese ist nun vollständig. Diese Informationen helfen bei der zukünftigen Prävention.",
+    "metadata": {
+      "module": "D2",
+      "step": "hormonal_factors_documented",
+      "trigger_factor": "hormonal_factors",
+      "documentation": "confirmed",
+      "anamnesis_status": "complete",
+      "next_steps": ["D2_063"]
+    }
+  },
+  {
+    "id": "D2_062",
+    "instruction": "Keine hormonellen Faktoren - Anamnese abgeschlossen",
+    "input": "Nein, es gab keine hormonellen Faktoren.",
+    "output": "Keine hormonellen Faktoren dokumentiert. Die umfassende Triggerfaktor-Anamnese ist nun vollständig. Diese systematische Erfassung hilft dabei, zukünftige Episoden zu vermeiden.",
+    "metadata": {
+      "module": "D2",
+      "step": "no_hormonal_factors",
+      "trigger_factor": "hormonal_factors",
+      "documentation": "negative",
+      "anamnesis_status": "complete",
+      "next_steps": ["D2_063"]
+    }
+  },
+  {
+    "id": "D2_063",
+    "instruction": "Übergang zu finaler Bewertung",
+    "input": "Die Triggerfaktor-Anamnese ist abgeschlossen.",
+    "output": "Basierend auf der umfassenden Bewertung und den durchgeführten Maßnahmen prüfen wir nun: Sind bereits 7 Tage seit Ihrer VHF-Episode vergangen?",
+    "metadata": {
+      "module": "D2",
+      "step": "final_assessment_timeframe",
+      "timing_check": "7_days_since_episode",
+      "next_steps": ["D2_064", "D2_065"]
+    }
+  },
+  {
+    "id": "D2_064",
+    "instruction": "7 Tage vergangen - Systemabschluss",
+    "input": "Ja, es sind bereits 7 Tage vergangen.",
+    "output": "Da bereits 7 Tage seit Ihrer VHF-Episode vergangen sind, ist das akute Management abgeschlossen. Sie können das System beenden und sollten bei neuen Episoden oder Beschwerden erneut Kontakt aufnehmen.",
+    "metadata": {
+      "module": "D2",
+      "step": "system_completion_7days",
+      "outcome": "system_exit",
+      "timing": "7_days_completed",
+      "final_status": "acute_management_completed"
+    }
+  },
+  {
+    "id": "D2_065",
+    "instruction": "Weniger als 7 Tage - Postakute Kontaktaufnahme",
+    "input": "Nein, es sind noch keine 7 Tage vergangen.",
+    "output": "Möchten Sie die postakute Kontaktaufnahme in Anspruch nehmen? Diese kann Ihnen weitere Unterstützung und Follow-up-Gespräche bieten.",
+    "metadata": {
+      "module": "D2",
+      "step": "postacute_contact_offered",
+      "next_steps": ["D2_066", "D2_067"],
+      "transition_to": "module_E"
+    }
+  },
+  {
+    "id": "D2_066",
+    "instruction": "Postakute Kontaktaufnahme gewünscht",
+    "input": "Ja, ich möchte die postakute Kontaktaufnahme.",
+    "output": "Ausgezeichnet. Sie werden nun zu Modul E (Postakute Kontaktaufnahme) weitergeleitet. Dort erhalten Sie strukturierte Follow-up-Gespräche und weitere Unterstützung.",
+    "metadata": {
+      "module": "D2",
+      "step": "transfer_to_module_e",
+      "next_module": "E",
+      "outcome": "postacute_care_initiated"
+    }
+  },
+  {
+    "id": "D2_067",
+    "instruction": "Keine postakute Kontaktaufnahme gewünscht",
+    "input": "Nein, ich möchte keine postakute Kontaktaufnahme.",
+    "output": "Das ist in Ordnung. Nach 24 Stunden werden wir Sie automatisch noch einmal kontaktieren, um Ihr Wohlbefinden zu überprüfen. Bis dahin können Sie sich jederzeit melden, falls Sie Unterstützung benötigen.",
+    "metadata": {
+      "module": "D2",
+      "step": "delayed_contact_24h",
+      "timing": "nach_24h",
+      "automated_trigger": true,
+      "next_steps": ["D2_065"],
+      "final_safety_net": "24h_follow_up"
+    }
+  },
+  {
+    "id": "D3_001",
+    "instruction": "Patient mit hohem VHF-Risiko - sofortige Notfall-Intervention erforderlich",
+    "input": "Ich habe starke Brustschmerzen und fühle mich sehr unwohl. Mein Herz rast und ich habe Atemnot.",
+    "output": "Ihr Zustand erfordert eine sofortige medizinische Betreuung. Bitte begeben Sie sich umgehend in die nächste Rettungsstelle oder wählen Sie den Notruf (112). Nehmen Sie bitte Ihre Krankenversichertenkarte, Arztbriefe und Ihr Episodentagebuch mit.",
+    "metadata": {
+      "module": "D3",
+      "step": "emergency_recommendation",
+      "risk_level": "high",
+      "next_steps": ["D3_002"],
+      "emergency_action": true,
+      "documents_required": ["KK_Karte", "Arztbriefe", "Episodentagebuch"]
+    }
+  },
+  {
+    "id": "D3_002",
+    "instruction": "Sofortige Blutdruckmessung bei Hochrisiko-VHF-Patient",
+    "input": "Ich bin jetzt zu Hause und möchte meinen Blutdruck messen. Wie soll ich vorgehen?",
+    "output": "Sehr wichtig: Messen Sie sofort Ihren Blutdruck. Setzen Sie sich ruhig hin, warten Sie 5 Minuten und messen Sie dann an Ihrem gewohnten Arm. Teilen Sie mir das Ergebnis umgehend mit - besonders der obere Wert (systolischer Blutdruck) ist wichtig für Ihre weitere Betreuung.",
+    "metadata": {
+      "module": "D3",
+      "step": "blood_pressure_measurement",
+      "condition": "immediate_BP_check",
+      "next_steps": ["D3_003", "D3_004"],
+      "priority": "urgent",
+      "timing": "immediate"
+    }
+  },
+  {
+    "id": "D3_003",
+    "instruction": "Herzfrequenz-Bewertung bei D3-Patient - Tachykardie erkannt",
+    "input": "Meine Herzfrequenz liegt bei 115 Schlägen pro Minute.",
+    "output": "Ihre Herzfrequenz von 115 bpm liegt deutlich über dem normalen Bereich (>100 bpm). Dies bestätigt Ihr hohes Risikoprofil. Wir werden jetzt Ihren Blutdruck überprüfen müssen, um weitere kritische Parameter zu bewerten.",
+    "metadata": {
+      "module": "D3",
+      "step": "heart_rate_evaluation",
+      "condition": "HF_over_100",
+      "next_steps": ["D3_005"],
+      "risk_elevation": "confirmed_high_risk",
+      "medical_threshold": "100_bpm"
+    }
+  },
+  {
+    "id": "D3_004",
+    "instruction": "Kritische Hypotonie bei D3-Patient - Notfall-Eskalation",
+    "input": "Mein systolischer Blutdruck ist 85 mmHg",
+    "output": "ACHTUNG: Ihr systolischer Blutdruck von 85 mmHg ist kritisch niedrig (<100 mmHg). Dies stellt eine akute Gefährdung dar. Sie müssen SOFORT eine Rettungsstelle aufsuchen oder den Notruf (112) wählen. Nehmen Sie Krankenversichertenkarte, Arztbriefe und Episodentagebuch mit. Warten Sie nicht!",
+    "metadata": {
+      "module": "D3",
+      "step": "critical_hypotension",
+      "condition": "BP_sys_under_100",
+      "emergency_escalation": true,
+      "risk_level": "critical",
+      "next_steps": ["emergency_services"],
+      "medical_threshold": "100_mmHg_systolic"
+    }
+  },
+  {
+    "id": "D3_005",
+    "instruction": "Blutdruck im Normalbereich trotz hoher Herzfrequenz bei D3-Patient",
+    "input": "Mein Blutdruck ist 125/80 mmHg, aber mein Herz schlägt immer noch sehr schnell.",
+    "output": "Ihr Blutdruck von 125/80 mmHg ist im normalen Bereich - das ist gut. Die erhöhte Herzfrequenz bleibt jedoch bestehen. Wir werden jetzt prüfen, ob Sie regelmäßig Beta-Blocker einnehmen, da diese bei Ihrem Risikoprofil wichtig sein können.",
+    "metadata": {
+      "module": "D3",
+      "step": "normal_bp_high_hr",
+      "condition": "BP_normal_HR_high",
+      "next_steps": ["D3_006"],
+      "vital_signs": "stable_BP"
+    }
+  },
+  {
+    "id": "D3_006",
+    "instruction": "Beta-Blocker-Therapie-Bewertung bei Hochrisiko-VHF",
+    "input": "Nein, ich nehme keine Beta-Blocker regelmäßig ein.",
+    "output": "Bei Ihrem hohen Risikoprofil ist eine Beta-Blocker-Therapie medizinisch indiziert. Beta-Blocker können die Herzfrequenz senken und Ihr Risiko für weitere Episoden reduzieren. Ich erkläre Ihnen die Indikation: Beta-Blocker wirken durch Blockade der Beta-Rezeptoren am Herzen und können bei VHF sowohl zur Frequenzkontrolle als auch zur Rhythmusstabilisierung eingesetzt werden.",
+    "metadata": {
+      "module": "D3",
+      "step": "beta_blocker_indication",
+      "condition": "no_beta_blocker_regular",
+      "next_steps": ["D3_007"],
+      "medication_class": "beta_blocker",
+      "indication_required": true
+    }
+  },
+  {
+    "id": "D3_007",
+    "instruction": "Beta-Blocker Dosierungsempfehlung für D3-Patient",
+    "input": "Wie soll ich die Beta-Blocker einnehmen?",
+    "output": "Empfehlung: Nehmen Sie eine Morgen- bzw. Abenddosis entsprechend der ärztlichen Verordnung ein. Wichtige Hinweise zu Nebenwirkungen: Mögliche Müdigkeit, Schwindel oder Blutdruckabfall. Die theoretische Wirkungszeit beträgt etwa 30-60 Minuten nach Einnahme. Bei kritischen Nebenwirkungen oder Verschlechterung kontaktieren Sie sofort einen Arzt.",
+    "metadata": {
+      "module": "D3",
+      "step": "beta_blocker_dosing",
+      "medication_timing": "morning_evening",
+      "onset_time": "30_60_minutes",
+      "next_steps": ["D3_009"],
+      "side_effects_monitoring": true
+    }
+  },
+  {
+    "id": "D3_008",
+    "instruction": "Patient nimmt bereits Beta-Blocker - Compliance-Prüfung D3",
+    "input": "Ja, ich nehme regelmäßig Beta-Blocker ein.",
+    "output": "Sehr gut, dass Sie bereits Beta-Blocker einnehmen. Bei Ihrem hohen Risikoprofil ist dies wichtig. Nehmen Sie diese weiterhin wie verordnet ein. Wir werden nun zu intensiven Unterstützungsmaßnahmen übergehen, die speziell für Hochrisiko-Patienten entwickelt wurden.",
+    "metadata": {
+      "module": "D3",
+      "step": "beta_blocker_compliance",
+      "condition": "beta_blocker_regular",
+      "next_steps": ["D3_009"],
+      "medication_adherence": "confirmed"
+    }
+  },
+  {
+    "id": "D3_009",
+    "instruction": "Intervention bei D3-Patient - strikt zeitgesteuerte Maßnahmen",
+    "input": "Was kann ich jetzt tun, um mir zu helfen?",
+    "output": "Bei Ihrem hohen Risikoprofil bieten wir Ihnen intensive Unterstützung in 15-Minuten-Zyklen an. Sie haben zwei Optionen: 1) Atem- und Entspannungsübungen oder 2) Chatbot-Konversation und Wissensmodule. Welche Option wählen Sie? Beachten Sie: Aufgrund Ihres Risikoprofils sind maximal 2 Angebote möglich.",
+    "metadata": {
+      "module": "D3",
+      "step": "intervention_selection",
+      "timing_interval": "15_minutes",
+      "max_offers": 2,
+      "options": ["breathing_relaxation", "chatbot_knowledge"],
+      "next_steps": ["D3_010", "D3_015"],
+      "no_manual_abort": true
+    }
+  },
+  {
+    "id": "D3_010",
+    "instruction": "15-Minuten Atemübungen für D3-Hochrisiko-Patient",
+    "input": "Ich möchte die Atemübungen durchführen.",
+    "output": "Ausgezeichnet. Ich werde Sie nun 15 Minuten lang zu Atemübungen anleiten. Diese sind speziell für Hochrisiko-VHF-Patienten entwickelt. Setzen Sie sich bequem hin und folgen Sie meinen Anweisungen. Beginnen wir mit der 4-7-8 Atemtechnik: 4 Sekunden einatmen, 7 Sekunden anhalten, 8 Sekunden ausatmen. Nach 15 Minuten frage ich Sie, ob Sie weitermachen möchten.",
+    "metadata": {
+      "module": "D3",
+      "step": "breathing_exercises",
+      "duration": "15_minutes",
+      "technique": "4_7_8_breathing",
+      "next_steps": ["D3_011"],
+      "intervention_type": "breathing"
+    }
+  },
+  {
+    "id": "D3_011",
+    "instruction": "Entscheidung Atemübungen vs. Entspannungsübungen bei D3",
+    "input": "Ich würde gerne Entspannungsübungen machen statt Atemübungen.",
+    "output": "Sehr gut. Ich werde Sie nun 15 Minuten lang zu Entspannungsübungen anleiten. Diese progressive Muskelentspannung ist speziell für Hochrisiko-VHF-Patienten angepasst. Beginnen Sie damit, sich bequem hinzusetzen und alle Muskeln bewusst zu lockern. Wir starten mit den Füßen und arbeiten uns nach oben vor. Nach 15 Minuten werden wir den Erfolg bewerten.",
+    "metadata": {
+      "module": "D3",
+      "step": "relaxation_exercises",
+      "duration": "15_minutes",
+      "technique": "progressive_muscle_relaxation",
+      "next_steps": ["D3_012"],
+      "intervention_type": "relaxation"
+    }
+  },
+  {
+    "id": "D3_012",
+    "instruction": "Fortsetzung nach 15-Minuten Atem-/Entspannungsübungen",
+    "input": "Die 15 Minuten sind vorbei. Ich fühle mich etwas besser.",
+    "output": "Das ist sehr erfreulich! Möchten Sie die Übungen weitere 15 Minuten fortsetzen? Bei Ihrem Risikoprofil empfehlen wir eine intensive Betreuung. Sie können wählen: weitere Übungen oder wir beenden diese Maßnahme und gehen zu anderen Unterstützungsoptionen über.",
+    "metadata": {
+      "module": "D3",
+      "step": "continue_exercises_decision",
+      "next_steps": ["D3_013", "D3_014"],
+      "timing_check": "after_15_minutes",
+      "options": ["continue", "end_exercises"]
+    }
+  },
+  {
+    "id": "D3_013",
+    "instruction": "Fortsetzung der Übungen bei D3-Patient",
+    "input": "Ja, ich möchte die Übungen fortsetzen.",
+    "output": "Ausgezeichnet. Wir setzen die Übungen für weitere 15 Minuten fort. Dies zeigt Ihr Engagement für Ihre Gesundheit. Fahren Sie mit der gleichen Technik fort. Ich werde Sie in 15 Minuten erneut fragen, ob Sie weitermachen möchten oder ob wir zu anderen Maßnahmen übergehen sollen.",
+    "metadata": {
+      "module": "D3",
+      "step": "continue_exercises",
+      "duration": "additional_15_minutes",
+      "next_steps": ["D3_014"],
+      "compliance": "positive"
+    }
+  },
+  {
+    "id": "D3_014",
+    "instruction": "Beendigung der Atem-/Entspannungsübungen nach D3-Protokoll",
+    "input": "Ich möchte jetzt aufhören mit den Übungen.",
+    "output": "Verstanden. Sie haben die Übungen gemacht - das war eine gute Entscheidung für Ihre Gesundheit. Nun werden wir prüfen, ob Sie bereits 2 Angebote wahrgenommen haben. Falls nicht, können wir weitere Maßnahmen anbieten. Bei Ihrem hohen Risikoprofil ist eine kontinuierliche Betreuung wichtig.",
+    "metadata": {
+      "module": "D3",
+      "step": "end_exercises",
+      "next_steps": ["D3_020"],
+      "offers_check": true,
+      "max_offers": 2
+    }
+  },
+  {
+    "id": "D3_015",
+    "instruction": "Chatbot-Konversation vs. Wissensmodule bei D3",
+    "input": "Ich möchte lieber Chatbot-Konversation und Wissensmodule nutzen.",
+    "output": "Sehr gut. Sie können wählen zwischen: 1) 15-minütiger Chatbot-Konversation für psychologische Unterstützung oder 2) 15-minütigen Wissensmodulen/Videos über VHF-Management. Beide sind speziell für Hochrisiko-Patienten konzipiert. Was bevorzugen Sie?",
+    "metadata": {
+      "module": "D3",
+      "step": "chatbot_knowledge_selection",
+      "options": ["chatbot_conversation", "knowledge_modules"],
+      "duration": "15_minutes",
+      "next_steps": ["D3_016", "D3_017"]
+    }
+  },
+  {
+    "id": "D3_016",
+    "instruction": "15-Minuten Chatbot-Konversation für D3-Patient",
+    "input": "Ich wähle die Chatbot-Konversation.",
+    "output": "Perfekt. Der Chatbot wird nun 15 Minuten lang mit Ihnen eine Konversation führen, die speziell auf Hochrisiko-VHF-Patienten zugeschnitten ist. Er wird Ihnen helfen, mit Ängsten umzugehen und Bewältigungsstrategien zu entwickeln. Der Chatbot startet in wenigen Sekunden. Nach 15 Minuten frage ich Sie, ob Sie weitermachen möchten.",
+    "metadata": {
+      "module": "D3",
+      "step": "chatbot_conversation",
+      "duration": "15_minutes",
+      "next_steps": ["D3_018"],
+      "intervention_type": "psychological_support"
+    }
+  },
+  {
+    "id": "D3_017",
+    "instruction": "15-Minuten Wissensmodule für D3-Patient",
+    "input": "Ich möchte die Wissensmodule und Videos ansehen.",
+    "output": "Ausgezeichnet. Ich stelle Ihnen nun 15 Minuten lang Wissensmodule und Videos zum VHF-Management bereit. Diese enthalten wichtige Informationen für Hochrisiko-Patienten: Erkennung von Warnsignalen, Notfallmaßnahmen, Lebensstilanpassungen. Die Module starten jetzt. Nach 15 Minuten bewerten wir gemeinsam den Nutzen.",
+    "metadata": {
+      "module": "D3",
+      "step": "knowledge_modules",
+      "duration": "15_minutes",
+      "content": ["warning_signs", "emergency_measures", "lifestyle_modifications"],
+      "next_steps": ["D3_019"],
+      "intervention_type": "education"
+    }
+  },
+  {
+    "id": "D3_018",
+    "instruction": "Fortsetzungsentscheidung nach Chatbot-Konversation",
+    "input": "Die 15 Minuten Chatbot-Konversation sind vorbei.",
+    "output": "Wie hat Ihnen die Chatbot-Konversation geholfen? Möchten Sie weitere 15 Minuten fortfahren oder zu anderen Maßnahmen wechseln? Bei Ihrem Risikoprofil ist es wichtig, dass Sie sich gut betreut fühlen. Teilen Sie mir Ihre Präferenz mit.",
+    "metadata": {
+      "module": "D3",
+      "step": "continue_chatbot_decision",
+      "next_steps": ["D3_016", "D3_020"],
+      "timing_check": "after_15_minutes_chatbot"
+    }
+  },
+  {
+    "id": "D3_019",
+    "instruction": "Fortsetzungsentscheidung nach Wissensmodulen",
+    "input": "Die Wissensmodule waren hilfreich. Was kommt als nächstes?",
+    "output": "Freut mich, dass die Wissensmodule hilfreich waren. Möchten Sie weitere 15 Minuten mit zusätzlichen Modulen fortfahren oder haben Sie genug Informationen? Bei Hochrisiko-Patienten ist umfassendes Wissen wichtig, aber wir wollen Sie auch nicht überfordern.",
+    "metadata": {
+      "module": "D3",
+      "step": "continue_knowledge_decision",
+      "next_steps": ["D3_017", "D3_020"],
+      "timing_check": "after_15_minutes_knowledge"
+    }
+  },
+  {
+    "id": "D3_020",
+    "instruction": "Überprüfung der 2-Angebote-Regel bei D3",
+    "input": "Ich habe jetzt eine Maßnahme gemacht. Was kommt als nächstes?",
+    "output": "Sie haben nun eine Maßnahme erfolgreich abgeschlossen. Bei Ihrem hohen Risikoprofil sind maximal 2 Angebote vorgesehen. Da Sie noch nicht beide wahrgenommen haben, kann ich Ihnen eine weitere Maßnahme anbieten. Möchten Sie eine zweite Unterstützungsmaßnahme durchführen?",
+    "metadata": {
+      "module": "D3",
+      "step": "check_two_offers_rule",
+      "offers_taken": 1,
+      "max_offers": 2,
+      "next_steps": ["D3_009", "D3_021"],
+      "options": ["second_offer", "decline_second_offer"]
+    }
+  },
+  {
+    "id": "D3_021",
+    "instruction": "Maximale Angebote erreicht oder abgelehnt bei D3",
+    "input": "Nein, ich möchte keine weiteren Maßnahmen durchführen.",
+    "output": "Verstanden. Sie haben nun Ihre Maßnahmen abgeschlossen. Bei Ihrem hohen Risikoprofil möchte ich fragen: Wünschen Sie weitere Maßnahmen oder sollen wir zum Buddy-System übergehen? Das Buddy-System kann bei Hochrisiko-Patienten zusätzliche Sicherheit bieten.",
+    "metadata": {
+      "module": "D3",
+      "step": "measures_completed",
+      "next_steps": ["D3_022"],
+      "buddy_system_transition": true
+    }
+  },
+  {
+    "id": "D3_022",
+    "instruction": "Buddy-System Information bei D3-Patient",
+    "input": "Was ist das Buddy-System? Soll ich jemanden informieren?",
+    "output": "Das Buddy-System bedeutet, dass eine Vertrauensperson (Familie, Freund) über Ihren aktuellen Zustand informiert wird. Bei Hochrisiko-VHF ist dies besonders wichtig, da diese Person im Notfall schnell reagieren kann. Möchten Sie, dass wir Ihren Buddy informieren?",
+    "metadata": {
+      "module": "D3",
+      "step": "buddy_system_explanation",
+      "next_steps": ["D3_023", "D3_024"],
+      "emergency_contact": true
+    }
+  },
+  {
+    "id": "D3_023",
+    "instruction": "Buddy wird informiert bei D3-Patient",
+    "input": "Ja, bitte informieren Sie meinen Buddy.",
+    "output": "Sehr gut. Ihr Buddy wird nun informiert, dass Sie eine VHF-Episode mit hohem Risikoprofil haben und medizinische Betreuung erhalten. Er/sie wird gebeten, für Sie erreichbar zu sein und im Notfall zu helfen. Dies ist ein wichtiger Sicherheitsbaustein bei Ihrem Risikoprofil.",
+    "metadata": {
+      "module": "D3",
+      "step": "buddy_notification",
+      "next_steps": ["D3_025"],
+      "buddy_informed": true,
+      "safety_measure": "activated"
+    }
+  },
+  {
+    "id": "D3_024",
+    "instruction": "Buddy-System abgelehnt bei D3-Patient",
+    "input": "Nein, ich möchte niemanden informieren.",
+    "output": "Ich respektiere Ihre Entscheidung. Bei Ihrem hohen Risikoprofil empfehle ich dennoch, dass Sie selbst eine Vertrauensperson über Ihren Zustand informieren. Falls sich Ihr Zustand verschlechtert, kann schnelle Hilfe lebenswichtig sein. Wir gehen nun zur 24-Stunden-Anamnese über.",
+    "metadata": {
+      "module": "D3",
+      "step": "buddy_declined",
+      "next_steps": ["D3_025"],
+      "buddy_informed": false,
+      "recommendation": "self_inform_contact"
+    }
+  },
+  {
+    "id": "D3_025",
+    "instruction": "24-Stunden-Anamnese Einleitung bei D3",
+    "input": "Was passiert jetzt? Wie geht es weiter?",
+    "output": "Nach 24 Stunden werden wir eine ausführliche Anamnese der letzten 24 Stunden vor Ihrer VHF-Episode durchführen. Dies ist bei Hochrisiko-Patienten besonders wichtig, um Triggerfaktoren zu identifizieren. Wir werden systematisch verschiedene mögliche Auslöser abfragen: Infekte, Magen-Darm-Probleme, Alkohol, Schlafmangel, Stress und andere Faktoren.",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_introduction",
+      "timing": "after_24h",
+      "next_steps": ["D3_026"],
+      "trigger_analysis": "comprehensive"
+    }
+  },
+  {
+    "id": "D3_026",
+    "instruction": "24h-Anamnese: Erbrechen in den letzten 24h vor Episode",
+    "input": "Nein, ich hatte kein Erbrechen in den letzten 24 Stunden.",
+    "output": "Gut, Erbrechen als Triggerfaktor können wir ausschließen. Als nächstes: Hatten Sie in den 24 Stunden vor der VHF-Episode Durchfall oder andere Magen-Darm-Beschwerden? Dies kann durch Elektrolytstörungen VHF auslösen.",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_vomiting",
+      "trigger": "vomiting",
+      "result": "negative",
+      "next_steps": ["D3_027"]
+    }
+  },
+  {
+    "id": "D3_027",
+    "instruction": "24h-Anamnese: Erbrechen dokumentiert",
+    "input": "Ja, ich hatte am Vorabend starkes Erbrechen.",
+    "output": "Erbrechen dokumentiert. Das ist ein wichtiger Triggerfaktor! Erbrechen kann zu Elektrolytstörungen führen, die VHF auslösen können. Dies wird in Ihrer Akte vermerkt und ist wichtig für zukünftige Präventionsstrategien. Hatten Sie auch Durchfall?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_vomiting_positive",
+      "trigger": "vomiting",
+      "result": "positive_documented",
+      "next_steps": ["D3_028"],
+      "prevention_relevance": "high"
+    }
+  },
+  {
+    "id": "D3_028",
+    "instruction": "24h-Anamnese: Durchfall abfragen",
+    "input": "Nein, ich hatte keinen Durchfall.",
+    "output": "Durchfall als Triggerfaktor ausgeschlossen. Weiter zur nächsten Frage: Hatten Sie in den 24 Stunden vor der Episode einen Infekt? Auch leichte Erkältungen oder andere Infektionen können bei Hochrisiko-Patienten VHF auslösen.",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_diarrhea",
+      "trigger": "diarrhea",
+      "result": "negative",
+      "next_steps": ["D3_029"]
+    }
+  },
+  {
+    "id": "D3_029",
+    "instruction": "24h-Anamnese: Infekt positiv",
+    "input": "Ja, ich hatte eine leichte Erkältung mit Husten.",
+    "output": "Infekt dokumentiert! Das ist ein sehr wichtiger Triggerfaktor bei Hochrisiko-VHF. Auch leichte Infekte können das autonome Nervensystem beeinflussen und VHF auslösen. Dies erklärt möglicherweise Ihre Episode. Als nächstes: Haben Sie Alkohol konsumiert?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_infection_positive",
+      "trigger": "infection",
+      "result": "positive_documented",
+      "next_steps": ["D3_030"],
+      "mechanism": "autonomic_nervous_system"
+    }
+  },
+  {
+    "id": "D3_030",
+    "instruction": "24h-Anamnese: Alkoholkonsum",
+    "input": "Ich hatte gestern Abend zwei Gläser Wein getrunken.",
+    "output": "Alkoholkonsum dokumentiert. Auch moderate Mengen können bei Hochrisiko-Patienten VHF triggern (Holiday Heart Syndrome). Die Kombination mit dem Infekt könnte besonders ungünstig gewesen sein. Nächste Frage: Hatten Sie Schlafmangel oder waren ungewöhnlich müde?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_alcohol_positive",
+      "trigger": "alcohol",
+      "result": "positive_documented",
+      "syndrome": "holiday_heart",
+      "next_steps": ["D3_031"],
+      "combination_effect": true
+    }
+  },
+  {
+    "id": "D3_031",
+    "instruction": "24h-Anamnese: Schlafentzug",
+    "input": "Ja, ich habe nur 4 Stunden geschlafen, weil ich gestresst war.",
+    "output": "Schlafentzug dokumentiert! Weniger als 6 Stunden Schlaf können bei Hochrisiko-Patienten definitiv VHF auslösen. Sie erwähnten Stress - das führt uns zur nächsten wichtigen Frage: Hatten Sie besonderen Stress oder emotionale Belastungen?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_sleep_deprivation_positive",
+      "trigger": "sleep_deprivation",
+      "result": "positive_documented",
+      "sleep_duration": "4_hours",
+      "next_steps": ["D3_032"],
+      "threshold": "under_6_hours"
+    }
+  },
+  {
+    "id": "D3_032",
+    "instruction": "24h-Anamnese: Stress",
+    "input": "Ja, ich hatte großen beruflichen Stress und Streit in der Familie.",
+    "output": "Stress dokumentiert! Psychischer Stress ist ein sehr häufiger VHF-Trigger bei Hochrisiko-Patienten. Die Kombination aus Infekt, Alkohol, Schlafmangel und Stress erklärt sehr wahrscheinlich Ihre Episode. Weiter: Hatten Sie Geschlechtsverkehr in den letzten 24 Stunden?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_stress_positive",
+      "trigger": "stress",
+      "result": "positive_documented",
+      "stress_types": ["occupational", "family"],
+      "next_steps": ["D3_033"],
+      "multiple_triggers": ["infection", "alcohol", "sleep_deprivation", "stress"]
+    }
+  },
+  {
+    "id": "D3_033",
+    "instruction": "24h-Anamnese: Geschlechtsverkehr",
+    "input": "Das ist mir unangenehm zu besprechen.",
+    "output": "Ich verstehe Ihr Unbehagen. Geschlechtsverkehr kann durch körperliche Anstrengung und hormonelle Veränderungen VHF auslösen, besonders bei Hochrisiko-Patienten. Wenn Sie möchten, können wir das überspringen. Nächste Frage: Haben Sie viel Koffein konsumiert?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_sex_sensitive",
+      "trigger": "sexual_activity",
+      "result": "not_disclosed",
+      "next_steps": ["D3_034"],
+      "privacy_respected": true
+    }
+  },
+  {
+    "id": "D3_034",
+    "instruction": "24h-Anamnese: Koffeinkonsum",
+    "input": "Ja, ich habe viel Kaffee getrunken, weil ich müde war.",
+    "output": "Koffeinkonsum dokumentiert! Bei bereits vorhandener Müdigkeit und Stress kann übermäßiger Koffeinkonsum definitiv VHF triggern. Das verstärkt die bereits identifizierten Risikofaktoren. Haben Sie eine besonders große Mahlzeit zu sich genommen?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_caffeine_positive",
+      "trigger": "caffeine",
+      "result": "positive_documented",
+      "context": "compensating_fatigue",
+      "next_steps": ["D3_035"],
+      "amplification_effect": true
+    }
+  },
+  {
+    "id": "D3_035",
+    "instruction": "24h-Anamnese: Große Mahlzeit",
+    "input": "Ja, wir hatten ein großes Familienessen mit sehr viel fettigem Essen.",
+    "output": "Große, fettreiche Mahlzeit dokumentiert! Dies kann über den Vagus-Nerv VHF auslösen, besonders in Kombination mit den anderen Faktoren. Haben Sie intensiven Sport betrieben oder waren körperlich sehr aktiv?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_large_meal_positive",
+      "trigger": "large_meal",
+      "meal_type": "fatty",
+      "result": "positive_documented",
+      "mechanism": "vagal_stimulation",
+      "next_steps": ["D3_036"]
+    }
+  },
+  {
+    "id": "D3_036",
+    "instruction": "24h-Anamnese: Sport/körperliche Aktivität",
+    "input": "Nein, ich habe keinen Sport gemacht.",
+    "output": "Sport als Triggerfaktor ausgeschlossen. Zwei weitere wichtige Fragen: Hatten Sie Anzeichen von Dehydratation (wenig getrunken, dunkler Urin)? Und bei Frauen: Gab es hormonelle Veränderungen (Menstruation, Wechseljahre)?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_exercise",
+      "trigger": "exercise",
+      "result": "negative",
+      "next_steps": ["D3_037", "D3_038"]
+    }
+  },
+  {
+    "id": "D3_037",
+    "instruction": "24h-Anamnese: Dehydratation",
+    "input": "Ja, ich habe sehr wenig getrunken und mein Urin war sehr dunkel.",
+    "output": "Dehydratation dokumentiert! Dies kann zu Elektrolytstörungen führen und ist ein wichtiger VHF-Trigger. In Kombination mit allen anderen Faktoren haben wir nun ein sehr klares Bild Ihrer Triggerkonstellation. Gibt es hormonelle Faktoren zu berücksichtigen?",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_dehydration_positive",
+      "trigger": "dehydration",
+      "result": "positive_documented",
+      "mechanism": "electrolyte_imbalance",
+      "next_steps": ["D3_038"],
+      "comprehensive_picture": true
+    }
+  },
+  {
+    "id": "D3_038",
+    "instruction": "24h-Anamnese: Hormonelle Faktoren",
+    "input": "Ich bin in den Wechseljahren und hatte starke Hitzewallungen.",
+    "output": "Hormonelle Faktoren dokumentiert! Wechseljahre und Hitzewallungen können definitiv VHF triggern. Ihre Anamnese zeigt eine komplexe Triggerkombination: Infekt, Alkohol, Schlafmangel, Stress, Koffein, große Mahlzeit, Dehydratation und hormonelle Faktoren. Dies erklärt sehr gut Ihre VHF-Episode und hilft bei der zukünftigen Prävention.",
+    "metadata": {
+      "module": "D3",
+      "step": "24h_anamnesis_hormonal_positive",
+      "trigger": "hormonal_factors",
+      "result": "positive_documented",
+      "condition": "menopause",
+      "next_steps": ["D3_039"],
+      "trigger_constellation": ["infection", "alcohol", "sleep_deprivation", "stress", "caffeine", "large_meal", "dehydration", "hormonal"]
+    }
+  },
+  {
+    "id": "D3_039",
+    "instruction": "Abschluss 24h-Anamnese und Übergang zu Modul E",
+    "input": "Das waren ja sehr viele Faktoren. Was bedeutet das für mich?",
+    "output": "Ihre ausführliche 24-Stunden-Anamnese hat acht verschiedene Triggerfaktoren identifiziert. Dies ist typisch für Hochrisiko-VHF-Patienten und erklärt, warum diese Episode aufgetreten ist. Diese Informationen sind wertvoll für Ihre zukünftige Prävention. Wir werden Sie nun zur postakuten Kontaktaufnahme (Modul E) weiterleiten, wo diese Erkenntnisse für Ihren langfristigen Behandlungsplan genutzt werden.",
+    "metadata": {
+      "module": "D3",
+      "step": "anamnesis_completion",
+      "triggers_identified": 8,
+      "next_module": "E",
+      "prevention_planning": true,
+      "risk_profile": "comprehensive_documented"
+    }
+  },
+  {
+    "id": "E_001",
+    "instruction": "Patient kommt nach Vorhofflimmer-Episode aus Pathway D1 (Niedriges Risiko) zur postakuten Nachbetreuung",
+    "input": "Ich hatte eine Vorhofflimmer-Episode und wurde über das grüne Risiko-Pathway betreut. Wie geht es jetzt weiter?",
+    "output": "Vielen Dank, dass Sie zur Nachbesprechung da sind. Wir möchten nun gemeinsam Ihre Episode auswerten und Ihnen dabei helfen, zukünftige Episoden besser zu verstehen und zu vermeiden. Lassen Sie uns mit einigen Fragen zu Ihrer Episode beginnen.",
+    "metadata": {
+      "module": "E",
+      "step": "pathway_entry_D1",
+      "source_module": "D1",
+      "next_steps": ["E_004"],
+      "timing": "postacute_followup"
+    }
+  },
+  {
+    "id": "E_002",
+    "instruction": "Patient kommt nach Vorhofflimmer-Episode aus Pathway D2 (Mittleres Risiko) zur postakuten Nachbetreuung",
+    "input": "Meine Vorhofflimmer-Episode wurde über das gelbe Risiko-Pathway behandelt. Was passiert als nächstes?",
+    "output": "Schön, dass Sie hier sind. Nach Ihrer Episode mit mittlerem Risiko möchten wir eine umfassende Nachbesprechung durchführen. Wir werden gemeinsam analysieren, was passiert ist und wie wir Sie optimal für die Zukunft vorbereiten können.",
+    "metadata": {
+      "module": "E",
+      "step": "pathway_entry_D2",
+      "source_module": "D2",
+      "next_steps": ["E_004"],
+      "timing": "postacute_followup"
+    }
+  },
+  {
+    "id": "E_003",
+    "instruction": "Patient kommt nach Vorhofflimmer-Episode aus Pathway D3 (Hohes Risiko) zur postakuten Nachbetreuung",
+    "input": "Ich hatte eine schwere Vorhofflimmer-Episode im roten Hochrisiko-Bereich. Wie wird die Nachsorge aussehen?",
+    "output": "Ich bin froh, dass Sie sicher durch diese intensive Episode gekommen sind. Nach einer Hochrisiko-Episode ist eine gründliche Nachbesprechung besonders wichtig. Wir werden detailliert besprechen, was geschehen ist und einen umfassenden Plan für Ihre weitere Betreuung entwickeln.",
+    "metadata": {
+      "module": "E",
+      "step": "pathway_entry_D3",
+      "source_module": "D3",
+      "next_steps": ["E_004"],
+      "timing": "postacute_followup",
+      "risk_level": "high"
+    }
+  },
+  {
+    "id": "E_004",
+    "instruction": "Bewertung ob die Vorhofflimmer-Episode selbstlimitierend war",
+    "input": "Die Episode hörte von selbst wieder auf, ohne dass ich etwas machen musste.",
+    "output": "Das ist sehr positiv! Eine selbstlimitierende Episode zeigt, dass Ihr Herz in der Lage war, von selbst wieder in den normalen Rhythmus zurückzufinden. Das ist ein gutes Zeichen. Lassen Sie uns nun die Dauer Ihrer Episode genauer betrachten, um ein vollständiges Bild zu bekommen.",
+    "metadata": {
+      "module": "E",
+      "step": "episode_self_limiting_yes",
+      "condition": "self_limiting_true",
+      "next_steps": ["E_020"],
+      "episode_type": "self_limiting"
+    }
+  },
+  {
+    "id": "E_005",
+    "instruction": "Episode war nicht selbstlimitierend - Übergang zur Interventionsbewertung",
+    "input": "Nein, die Episode hörte nicht von alleine auf. Es musste etwas unternommen werden.",
+    "output": "Ich verstehe. Wenn eine Episode nicht von selbst aufhört, ist es wichtig zu verstehen, welche Maßnahmen ergriffen wurden. Lassen Sie uns besprechen, welche Art der Behandlung Sie erhalten haben, um Ihren Herzrhythmus zu normalisieren.",
+    "metadata": {
+      "module": "E",
+      "step": "episode_not_self_limiting",
+      "condition": "self_limiting_false",
+      "next_steps": ["E_006"],
+      "episode_type": "intervention_required"
+    }
+  },
+  {
+    "id": "E_006",
+    "instruction": "Bewertung einer elektrischen Kardioversion",
+    "input": "Ja, ich hatte eine elektrische Kardioversion. Die Ärzte mussten einen Elektroschock geben, um mein Herz wieder in den normalen Rhythmus zu bringen.",
+    "output": "Eine elektrische Kardioversion ist ein sehr effektives Verfahren, um das Herz wieder in den normalen Rhythmus zu bringen. Es zeigt, dass Ihr Herz gut auf die Behandlung angesprochen hat. Lassen Sie uns nun die Dauer Ihrer Episode dokumentieren, um ein vollständiges Bild zu erhalten.",
+    "metadata": {
+      "module": "E",
+      "step": "electrical_cardioversion_yes",
+      "condition": "electrical_cardioversion_true",
+      "intervention_type": "electrical_cardioversion",
+      "next_steps": ["E_020"],
+      "documentation": "electrical_cardioversion_documented"
+    }
+  },
+  {
+    "id": "E_007",
+    "instruction": "Keine elektrische Kardioversion - Prüfung auf medikamentöse Intervention",
+    "input": "Nein, ich hatte keine elektrische Kardioversion.",
+    "output": "Verstanden. Dann wurde Ihr Herzrhythmus vermutlich auf andere Weise normalisiert. Lassen Sie uns prüfen, ob Sie Medikamente zur Rhythmusnormalisierung erhalten haben.",
+    "metadata": {
+      "module": "E",
+      "step": "electrical_cardioversion_no",
+      "condition": "electrical_cardioversion_false",
+      "next_steps": ["E_008"]
+    }
+  },
+  {
+    "id": "E_008",
+    "instruction": "Bewertung einer medikamentösen Kardioversion",
+    "input": "Ja, ich bekam Medikamente gespritzt, um den Herzrhythmus zu normalisieren.",
+    "output": "Eine medikamentöse Kardioversion ist eine bewährte Methode zur Rhythmusnormalisierung. Das zeigt, dass medikamentöse Therapien bei Ihnen wirksam sind. Lassen Sie uns spezifizieren, welches Medikament verwendet wurde.",
+    "metadata": {
+      "module": "E",
+      "step": "medication_cardioversion_yes",
+      "condition": "medication_cardioversion_true",
+      "intervention_type": "medication_cardioversion",
+      "next_steps": ["E_010", "E_011"]
+    }
+  },
+  {
+    "id": "E_009",
+    "instruction": "Keine medikamentöse Kardioversion",
+    "input": "Nein, ich bekam keine Medikamente zur Rhythmusnormalisierung gespritzt.",
+    "output": "Dann scheint Ihre Episode durch andere Umstände beendet worden zu sein. Lassen Sie uns die Details Ihrer Episode weiter analysieren, um die bestmögliche Nachsorge zu planen.",
+    "metadata": {
+      "module": "E",
+      "step": "medication_cardioversion_no",
+      "condition": "medication_cardioversion_false",
+      "next_steps": ["E_020"],
+      "episode_type": "other_termination"
+    }
+  },
+  {
+    "id": "E_010",
+    "instruction": "Flecainid wurde für die medikamentöse Kardioversion verwendet",
+    "input": "Ja, ich bekam Flecainid gespritzt.",
+    "output": "Flecainid ist ein sehr effektives Antiarrhythmikum für die akute Rhythmusnormalisierung. Es gehört zur Klasse 1C und ist besonders wirksam bei Vorhofflimmern. Diese Information ist wichtig für die Planung zukünftiger Behandlungsstrategien.",
+    "metadata": {
+      "module": "E",
+      "step": "flecainid_cardioversion",
+      "condition": "flecainid_true",
+      "medication": "flecainid",
+      "medication_class": "1C_antiarrhythmic",
+      "next_steps": ["E_020"],
+      "documentation": "flecainid_documented"
+    }
+  },
+  {
+    "id": "E_011",
+    "instruction": "Kein Flecainid - Prüfung auf Amiodaron",
+    "input": "Nein, ich bekam kein Flecainid.",
+    "output": "Verstanden. Lassen Sie uns prüfen, ob Amiodaron verwendet wurde, das ein anderes häufig eingesetztes Medikament zur Rhythmusnormalisierung ist.",
+    "metadata": {
+      "module": "E",
+      "step": "flecainid_no",
+      "condition": "flecainid_false",
+      "next_steps": ["E_012"]
+    }
+  },
+  {
+    "id": "E_012",
+    "instruction": "Amiodaron wurde für die medikamentöse Kardioversion verwendet",
+    "input": "Ja, ich erhielt Amiodaron intravenös.",
+    "output": "Amiodaron ist ein sehr potentes Antiarrhythmikum der Klasse III, das besonders bei komplexeren Rhythmusstörungen eingesetzt wird. Es hat eine sehr hohe Erfolgsrate bei der Kardioversion. Diese Information hilft uns bei der weiteren Behandlungsplanung.",
+    "metadata": {
+      "module": "E",
+      "step": "amiodarone_cardioversion",
+      "condition": "amiodarone_true",
+      "medication": "amiodarone",
+      "medication_class": "3_antiarrhythmic",
+      "next_steps": ["E_020"],
+      "documentation": "amiodarone_documented"
+    }
+  },
+  {
+    "id": "E_013",
+    "instruction": "Anderes Medikament für Kardioversion verwendet",
+    "input": "Nein, es war weder Flecainid noch Amiodaron. Es war ein anderes Medikament.",
+    "output": "Es gibt verschiedene andere Medikamente, die zur Rhythmusnormalisierung eingesetzt werden können. Jede medikamentöse Intervention liefert uns wichtige Informationen über die optimale Behandlungsstrategie für Sie. Lassen Sie uns nun die weiteren Details Ihrer Episode besprechen.",
+    "metadata": {
+      "module": "E",
+      "step": "other_medication_cardioversion",
+      "condition": "other_medication_true",
+      "medication": "other_antiarrhythmic",
+      "next_steps": ["E_020"],
+      "documentation": "other_medication_documented"
+    }
+  },
+  {
+    "id": "E_020",
+    "instruction": "Bewertung der Episodendauer - unter 12 Stunden",
+    "input": "Die Episode dauerte etwa 8 Stunden.",
+    "output": "Eine Episodendauer unter 12 Stunden ist relativ kurz und zeigt, dass sich Ihr Herzrhythmus verhältnismäßig schnell normalisiert hat. Das ist ein positives Zeichen für die Prognose. Diese kurze Dauer wird in Ihrer Dokumentation festgehalten und hilft uns bei der Risikobewertung für zukünftige Episoden.",
+    "metadata": {
+      "module": "E",
+      "step": "duration_under_12h",
+      "condition": "duration_less_12h",
+      "duration_category": "under_12h",
+      "next_steps": ["E_030"],
+      "documentation": "duration_under_12h_documented",
+      "prognosis": "favorable"
+    }
+  },
+  {
+    "id": "E_021",
+    "instruction": "Bewertung der Episodendauer - 12-24 Stunden",
+    "input": "Die Episode dauerte ungefähr 18 Stunden.",
+    "output": "Eine Episodendauer zwischen 12 und 24 Stunden liegt im moderaten Bereich. Ihr Herz brauchte etwas mehr Zeit für die Rhythmusnormalisierung, aber dies ist noch im akzeptablen Rahmen. Diese Dauer wird dokumentiert und fließt in unsere Behandlungsempfehlungen ein.",
+    "metadata": {
+      "module": "E",
+      "step": "duration_12_to_24h",
+      "condition": "duration_12_to_24h",
+      "duration_category": "12_to_24h",
+      "next_steps": ["E_030"],
+      "documentation": "duration_12_to_24h_documented",
+      "prognosis": "moderate"
+    }
+  },
+  {
+    "id": "E_022",
+    "instruction": "Bewertung der Episodendauer - 24-48 Stunden",
+    "input": "Die Episode dauerte etwa 36 Stunden.",
+    "output": "Eine Episodendauer zwischen 24 und 48 Stunden ist bereits länger und erfordert besondere Aufmerksamkeit. Nach 48 Stunden steigt das Risiko für Komplikationen deutlich an. Diese längere Dauer wird sorgfältig dokumentiert und beeinflusst unsere Präventionsstrategie.",
+    "metadata": {
+      "module": "E",
+      "step": "duration_24_to_48h",
+      "condition": "duration_24_to_48h",
+      "duration_category": "24_to_48h",
+      "next_steps": ["E_030"],
+      "documentation": "duration_24_to_48h_documented",
+      "risk_consideration": "increased_monitoring_needed"
+    }
+  },
+  {
+    "id": "E_023",
+    "instruction": "Bewertung der Episodendauer - bis zu 7 Tage",
+    "input": "Die Episode dauerte 5 Tage.",
+    "output": "Eine Episodendauer von mehreren Tagen bis zu einer Woche ist deutlich verlängert und erfordert eine intensivere Nachsorge. Solche längeren Episoden können das Risiko für Folgeprobleme erhöhen. Wir werden diese Information ausführlich dokumentieren und einen angepassten Behandlungsplan entwickeln.",
+    "metadata": {
+      "module": "E",
+      "step": "duration_up_to_7d",
+      "condition": "duration_up_to_7d",
+      "duration_category": "up_to_7d",
+      "next_steps": ["E_030"],
+      "documentation": "duration_up_to_7d_documented",
+      "risk_level": "elevated",
+      "follow_up_intensity": "increased"
+    }
+  },
+  {
+    "id": "E_024",
+    "instruction": "Bewertung der Episodendauer - über 7 Tage",
+    "input": "Die Episode dauerte über eine Woche, etwa 10 Tage.",
+    "output": "Eine Episodendauer von über 7 Tagen ist sehr lang und gilt als persistierendes Vorhofflimmern. Dies erfordert eine umfassende medizinische Bewertung und möglicherweise eine Anpassung Ihrer Langzeittherapie. Diese wichtige Information wird sorgfältig dokumentiert und fließt maßgeblich in Ihre weitere Behandlungsplanung ein.",
+    "metadata": {
+      "module": "E",
+      "step": "duration_over_7d",
+      "condition": "duration_over_7d",
+      "duration_category": "over_7d",
+      "next_steps": ["E_030"],
+      "documentation": "duration_over_7d_documented",
+      "episode_classification": "persistent_af",
+      "risk_level": "high",
+      "therapy_adjustment": "required"
+    }
+  },
+  {
+    "id": "E_030",
+    "instruction": "Behavioral Change - Lifestyle-Beratung und Triggerfaktor-Analyse",
+    "input": "Was kann ich tun, um zukünftige Episoden zu vermeiden?",
+    "output": "Sehr gute Frage! Es gibt verschiedene Lebensstilfaktoren, die Vorhofflimmer-Episoden begünstigen können. Lassen Sie uns gemeinsam analysieren, welche Trigger bei Ihnen eine Rolle gespielt haben könnten. Häufige Auslöser sind Stress, Schlafmangel, übermäßiger Alkoholkonsum, Koffein oder intensive körperliche Anstrengung. Basierend auf Ihrer Episodenhistorie können wir gezielte Präventionsstrategien entwickeln.",
+    "metadata": {
+      "module": "E",
+      "step": "behavioral_change_initiation",
+      "intervention_type": "lifestyle_counseling",
+      "topics": ["stress_management", "sleep_hygiene", "alcohol_reduction", "caffeine_moderation"],
+      "next_steps": ["E_031", "E_032"],
+      "prevention_focus": true
+    }
+  },
+  {
+    "id": "E_031",
+    "instruction": "Modulempfehlungen basierend auf Episodenhistorie - niedrig/mittleres Risiko",
+    "input": "Welche Module oder Programme könnten mir dabei helfen, besser mit meinem Vorhofflimmern umzugehen?",
+    "output": "Basierend auf Ihrer Episodenhistorie empfehle ich Ihnen unsere Wissensmodule zu Triggerfaktoren und Stressmanagement. Zusätzlich könnten Entspannungsübungen und unser Episodentagebuch sehr hilfreich sein. Diese Tools helfen Ihnen dabei, Muster zu erkennen und präventive Maßnahmen zu etablieren. Wir können auch ein Follow-up in 3-6 Monaten vereinbaren, um Ihren Fortschritt zu besprechen.",
+    "metadata": {
+      "module": "E",
+      "step": "module_recommendations_low_moderate",
+      "recommended_modules": ["trigger_education", "stress_management", "episode_diary"],
+      "follow_up_interval": "3_to_6_months",
+      "next_steps": ["E_040"],
+      "prevention_strategy": "self_management_focused"
+    }
+  },
+  {
+    "id": "E_032",
+    "instruction": "Modulempfehlungen basierend auf Episodenhistorie - hohes Risiko",
+    "input": "Nach meiner schweren Episode - welche Unterstützung brauche ich jetzt?",
+    "output": "Nach einer Hochrisiko-Episode ist eine engmaschige Betreuung wichtig. Ich empfehle Ihnen alle unsere Wissensmodule, regelmäßige EKG-Kontrollen und enge Zusammenarbeit mit Ihrem Kardiologen. Zusätzlich sollten Sie unser Buddy-System nutzen und bei jedem Verdacht auf eine neue Episode sofort Kontakt aufnehmen. Wir vereinbaren ein Follow-up in 4-6 Wochen.",
+    "metadata": {
+      "module": "E",
+      "step": "module_recommendations_high_risk",
+      "recommended_modules": ["all_education_modules", "buddy_system", "intensive_monitoring"],
+      "follow_up_interval": "4_to_6_weeks",
+      "next_steps": ["E_040"],
+      "prevention_strategy": "intensive_medical_supervision",
+      "cardiology_referral": "required"
+    }
+  },
+  {
+    "id": "E_040",
+    "instruction": "Abschluss der postakuten Nachbetreuung mit Zusammenfassung",
+    "input": "Ich verstehe. Gibt es noch etwas Wichtiges, was ich wissen sollte?",
+    "output": "Wir haben heute eine umfassende Analyse Ihrer Episode durchgeführt und einen individuellen Präventionsplan entwickelt. Die wichtigsten Punkte sind dokumentiert und Sie erhalten eine Zusammenfassung. Denken Sie daran: Sie sind nicht allein mit Ihrem Vorhofflimmern. Nutzen Sie die empfohlenen Module, führen Sie Ihr Episodentagebuch und zögern Sie nicht, bei Fragen oder neuen Episoden Kontakt aufzunehmen.",
+    "metadata": {
+      "module": "E",
+      "step": "followup_completion",
+      "documentation": "complete_episode_analysis_documented",
+      "patient_education": "completed",
+      "prevention_plan": "established",
+      "transition": "to_longterm_management",
+      "outcome": "successful_followup"
+    }
+  }
+]
