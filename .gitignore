@@ -5,8 +5,10 @@
 # -----------------------------------
 vhf-model*/
 vhf_model*/
+vhf-biomistral*/
 *-model/
 *-model-*/
+*biomistral*/
 model_output/
 output_dir/
 
@@ -14,7 +16,9 @@ output_dir/
 vhf-model-lora/
 vhf-model-gpt2/
 vhf-model-biomistral/
+vhf-biomistral-overnight/
 biomistral-model/
+*biomistral*/
 
 # Hugging Face Cache und Downloads
 .cache/
@@ -53,6 +57,14 @@ adapter_model.bin
 pytorch_model.bin
 model.safetensors
 training_args.bin
+
+# Tokenizer und Config Files (nur in Modell-Ordnern)
+# --------------------------------------------------
+# Diese werden durch die Modell-Ordner-Pattern bereits erfasst
+# Aber falls einzelne Dateien außerhalb liegen:
+# tokenizer.json
+# tokenizer_config.json
+# special_tokens_map.json
 
 # Datasets und Data Cache
 # -----------------------
