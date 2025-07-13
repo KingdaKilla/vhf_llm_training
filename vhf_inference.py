@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-VHF-LLM Inference Script
-Interaktives Testing des trainierten VHF-Modells
+VHF-LLM Inference Script - Fixed Version
+Interaktives Testing des trainierten VHF-Modells mit automatischer Basis-Modell-Erkennung
 """
 
 import torch
@@ -11,35 +11,80 @@ import argparse
 import json
 import os
 
+torch.set_num_threads(4)  # Nutzt 4 CPU-Kerne
+torch.set_flush_denormal(True)  # CPU-Optimierung
+
 class VHFInference:
     """Inference-Klasse für trainierte VHF-Modelle"""
     
-    def __init__(self, model_path: str, use_lora: bool = False):
+    def __init__(self, model_path: str, use_lora: bool = False, base_model: str = None):
         self.model_path = model_path
         self.use_lora = use_lora
+        self.base_model = base_model or self._detect_base_model()
         self.tokenizer = None
         self.model = None
         
         self._load_model()
     
+    def _detect_base_model(self):
+        """Erkennt das Basis-Modell automatisch"""
+        config_path = os.path.join(self.model_path, "config.json")
+        
+        # Prüfe zuerst den Ordnernamen
+        if "biomistral" in self.model_path.lower():
+            return "BioMistral/BioMistral-7B-DARE"
+        
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    
+                # Prüfe _name_or_path zuerst
+                name_or_path = config.get("_name_or_path", "")
+                if "biomistral" in name_or_path.lower():
+                    return "BioMistral/BioMistral-7B-DARE"
+                elif "mistral" in name_or_path.lower():
+                    return name_or_path
+                elif "dialogpt" in name_or_path.lower():
+                    return "microsoft/DialoGPT-medium"
+                
+                # Fallback basierend auf Architektur
+                model_type = config.get("model_type", "")
+                if model_type == "mistral":
+                    return "BioMistral/BioMistral-7B-DARE"
+                elif model_type == "gpt2":
+                    return "microsoft/DialoGPT-medium"
+                    
+            except Exception as e:
+                print(f"⚠️  Config-Fehler: {e}")
+        
+        # Standard-Fallback
+        return "microsoft/DialoGPT-medium"
+    
     def _load_model(self):
         """Lädt das trainierte Modell"""
         print(f"🤖 Lade Modell aus: {self.model_path}")
+        print(f"🔧 Basis-Modell: {self.base_model}")
         
         # Tokenizer laden
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
         
         if self.use_lora:
             # LoRA Modell laden
+            print(f"📦 Lade Basis-Modell: {self.base_model}")
             base_model = AutoModelForCausalLM.from_pretrained(
-                "microsoft/DialoGPT-medium",  # Base model - anpassen falls nötig
+                self.base_model,
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto" if torch.cuda.is_available() else None
+                device_map="auto" if torch.cuda.is_available() else None,
+                trust_remote_code=True
             )
+            
+            lora_path = f"{self.model_path}/lora_adapter"
+            print(f"📎 Lade LoRA Adapter aus: {lora_path}")
             
             self.model = PeftModel.from_pretrained(
                 base_model, 
-                f"{self.model_path}/lora_adapter"
+                lora_path
             )
             print("✅ LoRA Modell geladen")
         else:
@@ -47,7 +92,8 @@ class VHFInference:
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_path,
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto" if torch.cuda.is_available() else None
+                device_map="auto" if torch.cuda.is_available() else None,
+                trust_remote_code=True
             )
             print("✅ Standard Modell geladen")
     
@@ -55,9 +101,12 @@ class VHFInference:
         self, 
         instruction: str, 
         input_text: str = "", 
-        max_length: int = 200,
-        temperature: float = 0.7,
-        top_p: float = 0.9
+        max_length=100,          # Kürzere Antworten  
+        temperature=0.3,         # Weniger Random = schneller
+        top_p=0.8,              # Fokussierter
+        do_sample=True,
+        num_beams=1,            # Kein Beam Search
+        early_stopping=True     # Stoppe bei EOS Token
     ) -> str:
         """Generiert eine Antwort basierend auf Instruction und Input"""
         
@@ -224,6 +273,7 @@ def create_test_cases():
 def main():
     parser = argparse.ArgumentParser(description='VHF-LLM Inference')
     parser.add_argument('--model_path', required=True, help='Pfad zum trainierten Modell')
+    parser.add_argument('--base_model', help='Basis-Modell (automatisch erkannt falls nicht angegeben)')
     parser.add_argument('--use_lora', action='store_true', help='LoRA Modell verwenden')
     parser.add_argument('--interactive', action='store_true', help='Interaktiver Chat-Modus')
     parser.add_argument('--batch_test', help='Batch-Test mit JSON-Datei')
@@ -245,7 +295,7 @@ def main():
     
     try:
         # Inference Setup
-        inference = VHFInference(args.model_path, args.use_lora)
+        inference = VHFInference(args.model_path, args.use_lora, args.base_model)
         
         if args.interactive:
             inference.interactive_chat()
@@ -261,6 +311,8 @@ def main():
             
     except Exception as e:
         print(f"❌ Fehler: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
