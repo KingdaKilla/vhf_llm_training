@@ -1,0 +1,192 @@
+# VHF-LLM Training - GitIgnore
+# ===============================
+
+# Trainierte Modelle und Checkpoints
+# -----------------------------------
+vhf-model*/
+vhf_model*/
+*-model/
+*-model-*/
+model_output/
+output_dir/
+
+# Spezifische Modell-Ordner
+vhf-model-lora/
+vhf-model-gpt2/
+vhf-model-biomistral/
+biomistral-model/
+
+# Hugging Face Cache und Downloads
+.cache/
+huggingface_cache/
+transformers_cache/
+~/.cache/huggingface/
+
+# Training Logs und Checkpoints
+# -----------------------------
+logs/
+tensorboard_logs/
+wandb/
+runs/
+lightning_logs/
+checkpoint-*/
+*.log
+
+# LoRA Adapter und PEFT
+# ---------------------
+lora_adapter/
+peft_model/
+adapter_model/
+adapter_config.json
+adapter_model.bin
+
+# Model Files (große Binärdateien)
+# --------------------------------
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.pkl
+*.pickle
+pytorch_model.bin
+model.safetensors
+training_args.bin
+
+# Datasets und Data Cache
+# -----------------------
+data_cache/
+processed_data/
+*.arrow
+*.cache
+cache-*/
+
+# Virtual Environment
+# ------------------
+vhf_training_env/
+venv/
+env/
+.env
+.venv
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+# ------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Jupyter Notebook
+# ----------------
+.ipynb_checkpoints
+*.ipynb
+
+# PyTorch Profiler
+# ---------------
+prof/
+*.prof
+
+# IDE und Editor Dateien
+# ----------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporäre Dateien
+# -----------------
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Test und Evaluation Outputs
+# ---------------------------
+test_results_*.json
+evaluation_results/
+predictions/
+generated_responses/
+
+# WANDB
+# -----
+wandb/
+.wandb/
+
+# CUDA
+# ----
+*.cu
+*.cuh
+
+# System Files
+# -----------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup Files
+# -----------
+*.bak
+*.backup
+*.orig
+
+# Large Files (über 100MB)
+# ------------------------
+*.gz
+*.zip
+*.tar
+*.7z
+*.rar
+
+# Config Files mit Secrets
+# ------------------------
+.env.local
+.env.production
+secrets.json
+api_keys.json
+
+# Performance Profiling
+# ---------------------
+*.prof
+profile_*
+
+# Specific to this project
+# -----------------------
+# Eventuelle große JSON-Dateien (je nach Bedarf)
+# Vollstaendiger_Datensatz.json  # Nur uncommentieren falls sehr groß
+
+# Test Cases Output
+test_cases.json
+batch_test_results/
+
+# Model Download Cache
+downloads/
+models--*/
