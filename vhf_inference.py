@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-VHF-LLM Inference Script - Fixed Version
-Interaktives Testing des trainierten VHF-Modells mit automatischer Basis-Modell-Erkennung
+VHF-LLM Inference Script - BiomistralAI Optimized
+Schnelle und funktionierende Version für BiomistralAI
 """
 
 import torch
@@ -10,6 +10,7 @@ from peft import PeftModel
 import argparse
 import json
 import os
+import time
 
 torch.set_num_threads(4)  # Nutzt 4 CPU-Kerne
 torch.set_flush_denormal(True)  # CPU-Optimierung
@@ -66,17 +67,30 @@ class VHFInference:
         print(f"🤖 Lade Modell aus: {self.model_path}")
         print(f"🔧 Basis-Modell: {self.base_model}")
         
-        # Tokenizer laden
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+        # Tokenizer laden mit Optimierungen
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_path,
+            use_fast=True,
+            trust_remote_code=True
+        )
+        
+        # Pad token korrekt setzen
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+        
+        # Für BiomistralAI optimieren
+        self.tokenizer.padding_side = "left"
         
         if self.use_lora:
             # LoRA Modell laden
             print(f"📦 Lade Basis-Modell: {self.base_model}")
             base_model = AutoModelForCausalLM.from_pretrained(
                 self.base_model,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto" if torch.cuda.is_available() else None,
-                trust_remote_code=True
+                torch_dtype=torch.float32,
+                device_map=None,
+                trust_remote_code=True,
+                low_cpu_mem_usage=True
             )
             
             lora_path = f"{self.model_path}/lora_adapter"
@@ -91,70 +105,97 @@ class VHFInference:
             # Standard Modell laden
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_path,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto" if torch.cuda.is_available() else None,
-                trust_remote_code=True
+                torch_dtype=torch.float32,
+                device_map=None,
+                trust_remote_code=True,
+                low_cpu_mem_usage=True
             )
             print("✅ Standard Modell geladen")
+        
+        # Modell für Inferenz optimieren
+        self.model.eval()
     
     def generate_response(
         self, 
         instruction: str, 
         input_text: str = "", 
-        max_length=100,          # Kürzere Antworten  
-        temperature=0.3,         # Weniger Random = schneller
-        top_p=0.8,              # Fokussierter
-        do_sample=True,
-        num_beams=1,            # Kein Beam Search
-        early_stopping=True     # Stoppe bei EOS Token
+        max_length=80
     ) -> str:
-        """Generiert eine Antwort basierend auf Instruction und Input"""
+        """BiomistralAI-optimierte schnelle Antwort-Generierung"""
+        start_time = time.time()
         
-        # Formatiere den Prompt
-        prompt = f"""### Instruction:
-{instruction}
+        # BiomistralAI-Format verwenden
+        prompt = f"""[INST] {instruction}
 
-### Input:
-{input_text}
+Input: {input_text} [/INST]
 
-### Response:
 """
         
-        # Tokenize
-        inputs = self.tokenizer.encode(prompt, return_tensors='pt')
-        if torch.cuda.is_available():
-            inputs = inputs.to(self.model.device)
+        # Tokenize mit korrekter Attention Mask
+        encoding = self.tokenizer(
+            prompt, 
+            return_tensors='pt',
+            truncation=True,
+            max_length=200,
+            padding=False,
+            add_special_tokens=False
+        )
         
-        # Generate
+        input_ids = encoding['input_ids']
+        attention_mask = encoding.get('attention_mask', None)
+        
+        if torch.cuda.is_available():
+            input_ids = input_ids.to(self.model.device)
+            if attention_mask is not None:
+                attention_mask = attention_mask.to(self.model.device)
+        
+        # Vereinfachte Generation (nur unterstützte Parameter)
         with torch.no_grad():
             outputs = self.model.generate(
-                inputs,
-                max_length=inputs.shape[1] + max_length,
-                temperature=temperature,
-                do_sample=True,
-                top_p=top_p,
-                pad_token_id=self.tokenizer.eos_token_id,
+                input_ids,
+                attention_mask=attention_mask,
+                max_new_tokens=max_length,
+                do_sample=False,  # Greedy decoding - schnellste Option
+                pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
                 repetition_penalty=1.1
             )
         
-        # Decode nur die generierte Antwort
-        generated_text = self.tokenizer.decode(
-            outputs[0][inputs.shape[1]:], 
-            skip_special_tokens=True
-        )
+        # Decode nur die neue Antwort
+        if outputs.shape[1] > input_ids.shape[1]:
+            generated_tokens = outputs[0][input_ids.shape[1]:]
+            generated_text = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
+        else:
+            generated_text = "Keine Antwort generiert."
         
         # Bereinige die Antwort
         response = generated_text.strip()
-        if "###" in response:
-            response = response.split("###")[0].strip()
         
+        # Entferne mögliche Artefakte
+        if "[/INST]" in response:
+            response = response.split("[/INST]")[-1].strip()
+        if "[INST]" in response:
+            response = response.split("[INST]")[0].strip()
+        
+        # Schneide bei vollständigem Satz ab
+        for ending in ['. ', '? ', '! ']:
+            pos = response.rfind(ending)
+            if pos > 10:  # Mindestlänge
+                response = response[:pos + 1].strip()
+                break
+        
+        # Fallback falls Response leer
+        if not response or response == "None" or len(response) < 5:
+            response = "Das System verarbeitet Ihre Anfrage. Bitte wenden Sie sich an Ihren Arzt für weitere Beratung."
+        
+        print(f"⏱️  Generation: {time.time() - start_time:.1f}s")
         return response
     
     def interactive_chat(self):
         """Startet einen interaktiven Chat"""
-        print("\n🏥 VHF-LLM Interaktiver Chat")
+        print("\n🏥 VHF-LLM BiomistralAI Chat")
         print("=" * 40)
+        print("Optimiert für Geschwindigkeit!")
         print("Geben Sie 'quit' ein zum Beenden")
         print("Geben Sie 'help' für Beispiele ein")
         print("=" * 40)
@@ -183,6 +224,8 @@ class VHFInference:
                 print(f"\n💬 Antwort:\n{response}")
             except Exception as e:
                 print(f"❌ Fehler bei der Generierung: {e}")
+                import traceback
+                traceback.print_exc()
     
     def _show_examples(self):
         """Zeigt Beispiel-Instructions"""
@@ -271,7 +314,7 @@ def create_test_cases():
     print("✅ Test Cases erstellt: test_cases.json")
 
 def main():
-    parser = argparse.ArgumentParser(description='VHF-LLM Inference')
+    parser = argparse.ArgumentParser(description='VHF-LLM BiomistralAI Inference')
     parser.add_argument('--model_path', required=True, help='Pfad zum trainierten Modell')
     parser.add_argument('--base_model', help='Basis-Modell (automatisch erkannt falls nicht angegeben)')
     parser.add_argument('--use_lora', action='store_true', help='LoRA Modell verwenden')
@@ -292,6 +335,7 @@ def main():
     # Device Info
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"🖥️  Device: {device}")
+    print(f"⚡ BiomistralAI-optimiert für Geschwindigkeit!")
     
     try:
         # Inference Setup
